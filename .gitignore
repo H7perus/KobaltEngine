@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#H7per:project specifics
+*.vcxproj
+*.sln
+
+
 # User-specific files
 *.rsuser
 *.suo
@@ -361,3 +366,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/cobaltcore/CMakeFiles
+/cobaltcore/cmake_install.cmake
+*.filters
+/cobaltrenderer/CMakeFiles
+/cobaltrenderer/$CMAKE_RUNTIME_OUTPUT_DIRECTORY
+/cobaltrenderer/cmake_install.cmake
+/vcpkg_installed

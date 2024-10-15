@@ -1,0 +1,9 @@
+{
+  "name": "cobaltengine",
+  "version": "1.0",
+  "dependencies": [
+    "glm",
+    "sdl2",
+    "glew"
+  ]
+}

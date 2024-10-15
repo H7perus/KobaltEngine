@@ -1,0 +1,21 @@
+# CMakeLists.txt for the game directory
+
+# create the games target
+add_executable(GAME_NAME
+	src/main.cpp
+)
+
+
+find_package(SDL2 REQUIRED)
+if (WIN32)
+    add_custom_command(
+        TARGET GAME_NAME POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:GAME_NAME>"
+        VERBATIM
+    )
+endif()
+
+target_link_libraries(GAME_NAME PRIVATE ${LIBS_TO_LINK})
+
+set_target_properties(GAME_NAME PROPERTIES FOLDER Game)

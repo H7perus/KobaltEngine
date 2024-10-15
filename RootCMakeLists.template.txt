@@ -1,0 +1,66 @@
+cmake_minimum_required(VERSION 3.20)
+#set(CMAKE_FIND_DEBUG_MODE TRUE)
+
+set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+
+set(MY_INCLUDE_DIRS
+    engine/cobaltcore/src
+    engine/cobaltrenderer/src
+)
+set(LIBS_TO_LINK
+    cobaltrenderer.lib
+)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin/lib) #time to find out if this is right
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin/lib)
+link_directories("${CMAKE_BINARY_DIR}/build/bin/lib")
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin)
+
+set(ENGINE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/engine)
+
+set(RENDERING_DEPENDENCIES
+	glm::glm
+	SDL2::SDL2
+	GLEW::GLEW
+)
+
+set(LIBS_TO_LINK
+	cobaltrenderer.lib
+)
+
+
+
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/sdl2")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/glew")
+
+project(GAME_NAME)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_subdirectory(engine/cobaltcore)
+add_subdirectory(engine/cobaltrenderer)
+add_subdirectory(game)
+#set(CMAKE_FIND_DEBUG_MODE 1)
+
+find_package(OpenGL REQUIRED)         # OpenGL comes from the system
+find_package(glm CONFIG REQUIRED)
+
+
+
+
+find_package(SDL2 CONFIG REQUIRED)
+find_package(GLEW CONFIG REQUIRED)
+
+
+target_include_directories( GAME_NAME PUBLIC ${MY_INCLUDE_DIRS})
+
+target_link_libraries(cobaltrenderer PRIVATE ${RENDERING_DEPENDENCIES})
+
+target_link_libraries(GAME_NAME PRIVATE ${LIBS_TO_LINK} ${RENDERING_DEPENDENCIES})
+
+
+
+
+
