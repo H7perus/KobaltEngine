@@ -6,9 +6,9 @@ set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 set(MY_INCLUDE_DIRS
     engine/cobaltcore/src
     engine/cobaltrenderer/src
-)
-set(LIBS_TO_LINK
-    cobaltrenderer.lib
+    ${Stb_INCLUDE_DIR}
+    ${TINYGLTF_INCLUDE_DIRS}
+    ${TINYEXR_INCLUDE_DIRS}
 )
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin/lib) #time to find out if this is right
@@ -24,10 +24,13 @@ set(RENDERING_DEPENDENCIES
 	glm::glm
 	SDL2::SDL2
 	GLEW::GLEW
+	miniz::miniz
+	imgui::imgui
 )
 
 set(LIBS_TO_LINK
 	cobaltrenderer.lib
+	cobaltcore.lib
 )
 
 
@@ -45,20 +48,27 @@ add_subdirectory(game)
 #set(CMAKE_FIND_DEBUG_MODE 1)
 
 find_package(OpenGL REQUIRED)         # OpenGL comes from the system
-find_package(glm CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED) 
 
 
 
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
-
+find_package(imgui CONFIG REQUIRED)
+find_package(Stb REQUIRED)
+find_package(miniz REQUIRED)
 
 target_include_directories( GAME_NAME PUBLIC ${MY_INCLUDE_DIRS})
+target_include_directories( cobaltcore PUBLIC ${MY_INCLUDE_DIRS})
+
+#target_include_directories( cobaltrenderer PUBLIC ${TINYGLTF_INCLUDE_DIRS})
 
 target_link_libraries(cobaltrenderer PRIVATE ${RENDERING_DEPENDENCIES})
 
-target_link_libraries(GAME_NAME PRIVATE ${LIBS_TO_LINK} ${RENDERING_DEPENDENCIES})
+target_link_libraries(cobaltcore PRIVATE cobaltrenderer.lib ${RENDERING_DEPENDENCIES})
+
+target_link_libraries(GAME_NAME PRIVATE cobaltrenderer.lib cobaltcore.lib ${RENDERING_DEPENDENCIES})
 
 
 

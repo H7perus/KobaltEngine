@@ -4,6 +4,8 @@
   "dependencies": [
     "glm",
     "sdl2",
-    "glew"
+    "glew",
+    "stb",
+    "tinygltf"
   ]
 }
