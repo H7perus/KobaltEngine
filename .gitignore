@@ -373,3 +373,8 @@ FodyWeavers.xsd
 /cobaltrenderer/$CMAKE_RUNTIME_OUTPUT_DIRECTORY
 /cobaltrenderer/cmake_install.cmake
 /vcpkg_installed
+/build/CMakeFiles/3.30.5/CompilerIdCXX
+/build/CMakeFiles/3.30.5/CompilerIdC
+/build
+/cobaltcore/cobaltcore.dir/RelWithDebInfo
+/cobaltrenderer/cobaltrenderer.dir/RelWithDebInfo

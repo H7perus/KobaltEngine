@@ -26,7 +26,6 @@ int CobaltEngineCore::Init(std::string WindowTitle)
 	SDL_Init(SDL_INIT_VIDEO);
 	Window = SDL_CreateWindow(
 		WindowTitle.c_str(),
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		SCREEN_WIDTH, SCREEN_HEIGHT,
 		SDL_WINDOW_OPENGL
 	);

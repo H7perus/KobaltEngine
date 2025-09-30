@@ -8,10 +8,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "tiny_gltf.h"
 
-CobaltRenderer::CobaltRenderer()
+GLCobaltRenderer::GLCobaltRenderer()
 {
 }
-void CobaltRenderer::Init(SDL_Window* SDLWindow)
+void GLCobaltRenderer::Init(SDL_Window* SDLWindow)
 {
 	Window = SDLWindow;
 	Context = SDL_GL_CreateContext(Window);
@@ -32,7 +32,7 @@ void CobaltRenderer::Init(SDL_Window* SDLWindow)
 
 	glewInit();
 }
-void CobaltRenderer::Setup()
+void GLCobaltRenderer::Setup()
 {
 	shader = Shader(shader_path + "shaders/MDI_test.vert", shader_path + "shaders/MDI_test.frag");
 	shader.use();
@@ -55,7 +55,7 @@ void CobaltRenderer::Setup()
 
 }
 
-void CobaltRenderer::AddRenderGroup(uint64_t block_size, std::type_index type) {
+void GLCobaltRenderer::AddRenderGroup(uint64_t block_size, std::type_index type) {
 	//RenderGroups[0].emplace_back(block_size, type);
 }
 
@@ -96,7 +96,7 @@ void CobaltRenderer::AddRenderGroup(uint64_t block_size, std::type_index type) {
 //}
 
 
-VertLocator CobaltRenderer::SubmitPrimitive(PrimitiveDataBlock &primitive)
+VertLocator GLCobaltRenderer::SubmitPrimitive(PrimitiveDataBlock &primitive)
 {
 	VertLocator VertLocator;
 
@@ -119,7 +119,7 @@ VertLocator CobaltRenderer::SubmitPrimitive(PrimitiveDataBlock &primitive)
 	return VertLocator;
 }
 
-std::shared_ptr<DrawInfoGroup> CobaltRenderer::SubmitPrimitiveList(PrimitiveDataList PrimitiveList)
+std::shared_ptr<DrawInfoGroup> GLCobaltRenderer::SubmitPrimitiveList(PrimitiveDataList PrimitiveList)
 {
 	std::shared_ptr<DrawInfoGroup> InfoGroup = DrawInfoGroups.emplace_back(std::make_shared<DrawInfoGroup>());
 	//auto& InfoGroup = DrawInfoGroups.emplace_back(std::make_shared<DrawInfoGroup>());
@@ -155,14 +155,14 @@ std::shared_ptr<DrawInfoGroup> CobaltRenderer::SubmitPrimitiveList(PrimitiveData
 
 }
 
-int CobaltRenderer::SubmitMaterial(PBRMat& material)
+int GLCobaltRenderer::SubmitMaterial(PBRMat& material)
 {
 	int ret = MaterialGroups[0].used_size / sizeof(PBRMat);
 	MaterialGroups[0].DataAtEnd(sizeof(PBRMat), &material);
 	return ret;
 }
 
-void CobaltRenderer::SubmitDrawCommand(DrawCommand& cmd)
+void GLCobaltRenderer::SubmitDrawCommand(DrawCommand& cmd)
 {
 	void* inters = (char*)&cmd + sizeof(cmd.group);
 
@@ -171,7 +171,7 @@ void CobaltRenderer::SubmitDrawCommand(DrawCommand& cmd)
 	//RenderGroups[cmd.group[0]][cmd.group[1]]->commands.push_back(*final_cmd);
 }
 
-void CobaltRenderer::Draw()
+void GLCobaltRenderer::Draw()
 {
 	glClearColor(0.15f, 0.0f, 0.15f, 1.0f);
 	glClearDepth(1.0);
@@ -212,7 +212,7 @@ void CobaltRenderer::Draw()
 	//SDL_GL_SwapWindow(Window);
 }
 
-PBRMat CobaltRenderer::GetMaterial(tinygltf::Model& model, int matindex)
+PBRMat GLCobaltRenderer::GetMaterial(tinygltf::Model& model, int matindex)
 {
 	PBRMat returnmat;
 
@@ -233,7 +233,7 @@ PBRMat CobaltRenderer::GetMaterial(tinygltf::Model& model, int matindex)
 				alreadyexists = true;
 				returnmat.color_factor = glm::vec4(1.0);
 				returnmat.albedo = Tex->handle;
-				//Tex->MakeResident();
+				Tex->MakeResident();
 			}
 		
 		if (!alreadyexists)

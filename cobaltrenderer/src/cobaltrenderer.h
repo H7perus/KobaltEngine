@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include <iostream>
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #undef main
 #include "GL/glew.h"
 #include "glm/glm.hpp"
@@ -45,7 +45,7 @@ struct DrawCommand
 
 //Eventual TODO might be: split render groups into vertex + indices and data buffers. That way we can reuse vertex data for other materials.
 
-class RENDERER_DLL_API  CobaltRenderer //only OpenGL for now, maybe never anything else.
+class RENDERER_DLL_API  GLCobaltRenderer //only OpenGL for now, maybe never anything else.
 {
 public:
 
@@ -92,7 +92,7 @@ public:
 
 
 
-	CobaltRenderer();
+	GLCobaltRenderer();
 
 	void Init(SDL_Window* SDL_Window);
 

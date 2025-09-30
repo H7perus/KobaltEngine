@@ -1,11 +1,17 @@
 {
-  "name": "cobaltengine",
+  "name": "kobaltengine",
   "version": "1.0",
   "dependencies": [
+    {
+            "name": "imgui",
+            "features": ["sdl3-binding", "vulkan-binding", "opengl3-binding"]
+    },
     "glm",
-    "sdl2",
+    "sdl3",
     "glew",
     "stb",
-    "tinygltf"
+    "miniz",
+    "tinygltf",
+    "tinyexr"
   ]
 }

@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include "SDL2/SDl.h"
+#include "SDL3/SDL.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdl3.h"
 class DevUI
 {
 public:
@@ -19,7 +19,7 @@ public:
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
-		ImGui_ImplSDL2_InitForOpenGL(window, sdl_context);
+		ImGui_ImplSDL3_InitForOpenGL(window, sdl_context);
 		ImGui_ImplOpenGL3_Init("#version 130");
 		ImGui::StyleColorsDark();
 
@@ -31,7 +31,7 @@ public:
 	void DrawUI()
 	{
 		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		ImGui::Begin("Demo window");
 		bool test = true;

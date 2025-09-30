@@ -83,6 +83,9 @@ int main() {
     $content = $content -replace "GAME_NAME", $GAME_NAME
     $content | Set-Content $DESTINATION_FILE
 
+    $content = Get-Content "vcpkg.json" -Raw
+    $content | Set-Content "../vcpkg.json"
+
     if (-not (Test-Path $BIN_FOLDER)) {
         Write-Host "Creating build folder: $BIN_FOLDER"
         New-Item -Path $BIN_FOLDER -ItemType Directory

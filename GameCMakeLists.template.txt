@@ -6,13 +6,13 @@ add_executable(GAME_NAME
 )
 
 
-find_package(SDL2 REQUIRED)
+find_package(SDL3 REQUIRED)
 find_package(GLEW REQUIRED)
 if (WIN32)
     add_custom_command(
         TARGET GAME_NAME POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:GAME_NAME>"
+        "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:GAME_NAME>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<TARGET_FILE:GLEW::GLEW>" "$<TARGET_FILE_DIR:GAME_NAME>"
         VERBATIM

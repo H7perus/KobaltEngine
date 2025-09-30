@@ -2,7 +2,7 @@
 #include <string>
 #include <filesystem>
 
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "cobaltrenderer.h"
 
 #include "tiny_gltf.h"
@@ -18,7 +18,7 @@ public:
 	tinygltf::TinyGLTF loader;
 
 	SDL_Window* Window;
-	CobaltRenderer Renderer;
+	GLCobaltRenderer Renderer;
 	std::vector<DrawInfoGroup> RObjects;
 
 	CobaltEngineCore();

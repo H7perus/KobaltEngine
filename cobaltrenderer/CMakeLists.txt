@@ -6,17 +6,7 @@ add_library(cobaltrenderer SHARED
 )
 
 
-find_package(SDL2 CONFIG REQUIRED)
-if (WIN32)
-    add_custom_command(
-        TARGET cobaltrenderer POST_BUILD 
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL2::SDL2>" "$CMAKE_RUNTIME_OUTPUT_DIRECTORY" 
-        VERBATIM
-    )
-endif()
-
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/sdl2")
-find_package(SDL2 CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/glew")
 find_package(GLEW CONFIG REQUIRED)

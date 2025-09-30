@@ -94,6 +94,9 @@ vec3 KhrPBRneutral(vec3 inputColor)
 
 void main()                                                                   
 {   
+    out_Color.rgb = Texcoord.xyx;
+    //return;
+
 
     uint local_objectID = commands[drawID].materialID;
 
@@ -131,6 +134,10 @@ void main()
     }
 
     vec3 normalMap = (texture(mat.normal, Texcoord).rgb - 0.5) * 2;
+
+
+    //out_Color.rgb = normalMap;
+    //return;
 
 
     vec3 finNormal = normalize(Tangent * normalMap.x  + Bitangent * normalMap.y + Normal * normalMap.z);
