@@ -44,7 +44,7 @@ GLTexture::GLTexture(int target, int internalformat, int width, int height, int 
 	handle = glGetTextureHandleARB(ID);
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
-		std::cout << "OpenGL Error on Tex creation?: " << err << std::endl;
+		//std::cout << "OpenGL Error on Tex creation?: " << err << std::endl;
 	}
 
 }
@@ -70,7 +70,7 @@ void GLTexture::MakeResident()
 	glMakeTextureHandleResidentARB(handle);
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
-		std::cout << "OpenGL Error in Texture?: " << err << std::endl;
+		//std::cout << "OpenGL Error in Texture?: " << err << std::endl;
 	}
 }
 

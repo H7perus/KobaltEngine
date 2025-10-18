@@ -2,8 +2,8 @@
 
 layout(location = 0)  in vec3 inPosition;
 layout(location = 1)  in vec3 normal;
-layout(location = 2)  in vec3 tangent;
-layout(location = 3)  in vec2 UVMap;
+layout(location = 3)  in vec3 tangent;
+layout(location = 2)  in vec2 UVMap;
 
 
 in vec3 in_Position;                                                         
@@ -58,8 +58,8 @@ void main()
     Bitangent = cross(Normal, Tangent);
 
 
-    Texcoord = vec2(UVMap.x, 1 - UVMap.y); 
-    Texcoord.y = 1 - Texcoord.y;
+    Texcoord = vec2(UVMap.x, UVMap.y); 
+    //Texcoord.y = 1 - Texcoord.y;
     FragPos =  mat3(modelmat) * in_Position.xyz;
     gl_Position = transform * (modelmat * vec4(in_Position.xyz, 1.0));                                
                                 

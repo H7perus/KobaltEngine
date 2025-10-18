@@ -90,7 +90,7 @@ public:
 		if (allocated_size < used_size + size)
 			return false;
 		glNamedBufferSubData(ID, used_size, size, data);
-		std::cout << "ERROR ON DATAATEND" << glGetError() << std::endl;
+		//std::cout << "ERROR ON DATAATEND" << glGetError() << std::endl;
 		used_size += size;
 	}
 	//bind with main use.

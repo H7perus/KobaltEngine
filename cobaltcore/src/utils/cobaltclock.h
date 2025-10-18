@@ -49,10 +49,13 @@ public:
 		chrono_start_time = std::chrono::high_resolution_clock::now();
 	}
 
-	void Update() 
+	float Update() 
 	{
 		chrono_curr_time = std::chrono::high_resolution_clock::now();
+		uint64_t prevtime = time;
 		time = std::chrono::duration_cast<std::chrono::nanoseconds>(chrono_curr_time - chrono_start_time).count();
+
+		return float(time - prevtime) / 1e9;
 	}
 	void Reset()
 	{

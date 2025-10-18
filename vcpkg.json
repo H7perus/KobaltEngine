@@ -12,6 +12,7 @@
     "stb",
     "miniz",
     "tinygltf",
-    "tinyexr"
+    "tinyexr",
+    "vk-bootstrap"
   ]
 }

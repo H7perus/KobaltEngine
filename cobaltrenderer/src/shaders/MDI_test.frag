@@ -122,11 +122,11 @@ void main()
 
     if( abs(Normal.z) > abs(Normal.x) && abs(Normal.z) > abs(Normal.y))
     {
-        TriPlanar.xy = FragPos.xz;
+        TriPlanar.xy = FragPos.xy;
     }
     else if(abs(Normal.y) > abs(Normal.z))
     {
-        TriPlanar.xy =  FragPos.xy;
+        TriPlanar.xy =  FragPos.xz;
     }
     else
     {
@@ -140,22 +140,25 @@ void main()
     //return;
 
 
-    vec3 finNormal = normalize(Tangent * normalMap.x  + Bitangent * normalMap.y + Normal * normalMap.z);
+    vec3 finNormal = Normal; //normalize(Tangent * normalMap.x  + Bitangent * normalMap.y + Normal * normalMap.z);
 
     //vec4 texColor = texture(cat, TriPlanar.xy);
     //texColor = textureLod(lightmap, vec2(Texcoord.x, 1 - Texcoord.y), 0);
     //out_Color = textureLod(lightmap, vec2(Texcoord.x, 1 - Texcoord.y), 0) * sRGBToLinear(texColor * mat.tint) * 1;
 
-    out_Color = texture(cat, Texcoord);
+    out_Color = texture(cat, Texcoord); // * texture(lightmap, Texcoord);
+
+    //out_Color.rgb = vec3(Texcoord.xx, 0);
+    //return;
     if(!debugbool)
         finNormal = Normal;
 
-    out_Color = mix(out_Color, vec4(finNormal + 1, 2.0) / 2, normalmix);
+    out_Color = mix(out_Color * 0.5, vec4(finNormal + 1, 2.0) / 2, normalmix);
     out_Color.rgb = KhrPBRneutral(vec3(out_Color));
     //if(texture(mat.metallicity, vec2(0)).g > 0)
     //    out_Color = texture(mat.metallicity, vec2(0)).gggg;
 
-    //out_Color = pow(out_Color, vec4(1 / 2.2));
+    out_Color = pow(out_Color, vec4(1 / 2.2));
 } 
 
 

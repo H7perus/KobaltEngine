@@ -21,6 +21,8 @@
 #include "stb_image.h"
 #include "tiny_gltf.h"
 
+#include "renderertypes/LineVert.h"
+
 //are these even used wtf
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 820;
@@ -59,8 +61,16 @@ public:
 	std::vector<GLBuffer> MaterialGroups; //each material type gets its own buffer
 
 
+	//fuck indexed draw. We don't care about memory overhead now
+	std::vector<LineSegment> lines;
+	std::vector<std::pair<uint32_t, uint32_t>> BBGroups;
+
 	std::vector<DrawElementsIndirectCommand> CPUCommandBuffer;
 	GLBuffer CommandBuffer = GLBuffer(GL_DRAW_INDIRECT_BUFFER, GL_DYNAMIC_DRAW);
+
+	GLuint lVAO;
+	GLBuffer lVBO = GLBuffer(GL_ARRAY_BUFFER);
+	GLBuffer lEBO = GLBuffer(GL_ELEMENT_ARRAY_BUFFER);
 
 	//std::vector<Shader> Shaders; //each Shader and each Shader variant(like ifdefs) will be represented here.
 
@@ -116,7 +126,18 @@ public:
 
 	void SubmitDrawCommand(DrawCommand &cmd);
 
+	void StartMainPass()
+	{
+		VBGroups[0].Bind();
+	}
+
 	void Draw();
+
+	void SetupLines(std::vector<glm::vec3>& verts, std::vector<uint32_t>& indices);
+
+	int AddLineSet(std::vector<LineSegment>& segments);
+
+	void DrawWireframes(int first, int count);
 
 	PBRMat GetMaterial(tinygltf::Model& model, int matindex);
 };
