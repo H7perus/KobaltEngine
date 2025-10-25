@@ -85,7 +85,7 @@ void KEngineCore::RunFrame()
 		lastFrame.timeNS = clock.time;
 	}
 
-
+	
 	UniformCommons Uniforms;
 
 	float fraction = uint64_t(clock.time - lastFrame.timeNS) / (1000000000 / gamestate.tickrate);

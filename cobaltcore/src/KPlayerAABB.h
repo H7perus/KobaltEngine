@@ -84,6 +84,7 @@ public:
 		glm::vec3 pA = position - glm::vec3(width / 2, width / 2, 1.6f);
 		glm::vec3 pB = pA + glm::vec3(width, width, height);
 
+
 		tA = pA, tB = pB;
 
 		//this gets us a trace AABB, which is essentially the AABB encompassing start and end point player AABBs
@@ -138,6 +139,9 @@ public:
 			traceAgainstEdge(tri.second->a, tri.second->b, position, normal, delta, t);
 			traceAgainstEdge(tri.second->b, tri.second->c, position, normal, delta, t);
 			traceAgainstEdge(tri.second->c, tri.second->a, position, normal, delta, t);
+			traceAgainstVert(tri.second->a, position, normal, delta, t);
+			traceAgainstVert(tri.second->b, position, normal, delta, t);
+			traceAgainstVert(tri.second->c, position, normal, delta, t);
 		}
 		if (t < 1.0)
 			return true;
@@ -151,6 +155,7 @@ public:
 
 		ray.direction = delta;
 
+		//TODO: bruh we need to cast AT MOST one ray from one corner, determined from a mix of triangle normal and movedelta
 		for (int i = 0; i < 8; i++)
 		{
 			ray.origin = position - glm::vec3(width / 2, width / 2, 1.6f);
@@ -182,6 +187,7 @@ public:
 		if(!AABBintersect(glm::min(eA, eB), glm::max(eA, eB)))
 			return false;
 
+		//TODO: similar to vert, we don't need 12 edge traces
 		for (int i = 0; i < 12; i++)
 		{
 			glm::vec3 pA, pB;
@@ -277,21 +283,63 @@ public:
 	}
 	bool traceAgainstVert(glm::vec3& vert, glm::vec3& position, glm::vec3& normal, glm::vec3& delta, float& t)
 	{
-		glm::vec3 pA = position - glm::vec3(width / 2, width / 2, 1.6f);
-		glm::vec3 pB = position + glm::vec3(width / 2, width / 2, 0.2f);
-
-		glm::bvec3 isinside = glm::bvec3(glm::sign( (vert - pA))) && glm::bvec3(glm::sign((pB - vert)));
-
-		bool outsideTrace = glm::all(glm::bvec3(glm::sign((vert - tA))) && glm::bvec3(glm::sign((tB - vert))));
-		if(outsideTrace)
+		bool outsideTrace = !glm::all(glm::bvec3(glm::sign((vert - tA))) && glm::bvec3(glm::sign((tB - vert))));
+		if (outsideTrace)
 			return false;
 
+		glm::vec3 pMin = position - glm::vec3(width / 2, width / 2, 1.6f);
+		glm::vec3 pMax = position + glm::vec3(width / 2, width / 2, 0.2f);
 
-		std::numeric_limits<float>::infinity();
-		/*glm::vec3 relApproachRate =  glm::vec3(
-			isinside.x ? std::numeric_limits<float>::infinity() : ;
-*/
+		glm::vec3 minDelta = glm::vec3(vert - pMin);
+		glm::vec3 maxDelta = glm::vec3(vert - pMax);
 
+		//TODO: I'd like zero to be included in "is inside" but right now it would not be
+		glm::bvec3 isinside = glm::bvec3(glm::max(minDelta, 0.0f)) && glm::bvec3(glm::max(-maxDelta, 0.0f));
+
+
+		float inf = std::numeric_limits<float>::infinity();
+		glm::vec3 relApproachRate = glm::vec3(
+			isinside.x ? std::numeric_limits<float>::infinity() : glm::min(minDelta.x / delta.x, maxDelta.x / delta.x),
+			isinside.y ? std::numeric_limits<float>::infinity() : glm::min(minDelta.y / delta.y, maxDelta.y / delta.y),
+			isinside.z ? std::numeric_limits<float>::infinity() : glm::min(minDelta.z / delta.z, maxDelta.z / delta.z));
+
+		//the direction with the lowest approach rate = the one we care about
+		//we then try to hit that sideplane (unless its >t away) and see we are within the faces bounds
+
+		int lowest_index = 0;
+		for (int i = 1; i < 3; i++)
+		{
+			if (relApproachRate[i] < relApproachRate[lowest_index])
+			{
+				lowest_index = i;
+			}
+		}
+		//technically this only needs the t check, because t is essentially guaranteed to be 0 <= t <= 1
+		if (relApproachRate[lowest_index] < 0.0f || relApproachRate[lowest_index] >= 1.0f || relApproachRate[lowest_index] >= t)
+		{
+			return false;
+		}
+		//now to check if we are in bounds
+
+		glm::vec3 hitpos = vert + delta * relApproachRate[lowest_index];
+
+		int offset_ind1 = (lowest_index + 1) % 3;
+		int offset_ind2 = (lowest_index + 2) % 3;
+
+		if (hitpos[offset_ind1] > pMax[offset_ind1] || hitpos[offset_ind1] < pMin[offset_ind1])
+			return false;
+
+		if (hitpos[offset_ind2] > pMax[offset_ind2] || hitpos[offset_ind2] < pMin[offset_ind2])
+			return false;
+
+		t = relApproachRate[lowest_index];
+		normal = glm::vec3(0);
+		normal[lowest_index] = 1.0;
+		normal *= glm::sign(pMax[lowest_index] - vert[lowest_index]);
+		if (std::isnan(t))
+		{
+			__debugbreak(); // Triggers the debugger
+		}
 		return true;
 	}
 	void updateTraceAABB(glm::vec3 &position, glm::vec3 delta)

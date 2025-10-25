@@ -11,6 +11,8 @@
 #include "KPlayerAABB.h"
 #include "KBvhNode.h"
 
+using namespace std::chrono_literals;
+
 class KGameState
 {
 public:
@@ -167,9 +169,14 @@ public:
 
 		float fraction_left = 1.0;
 
+		std::chrono::seconds halfmin = 30s;
+
 		std::chrono::microseconds cumulativecost = std::chrono::microseconds(0);
 
-		for (int bumpcount = 0; bumpcount < 4; bumpcount++)
+		glm::vec3 collidehistory[4];
+
+
+		for (int bumpcount = 0; bumpcount < 4 && movedelta != glm::vec3(0); bumpcount++)
 		{
 			float t = 1.0;
 			if(!noclip)
@@ -186,7 +193,16 @@ public:
 
 			fraction_left -= t * fraction_left;
 
-			movedelta -= hitnormal * dot(movedelta, hitnormal);
+			collidehistory[bumpcount] = hitnormal;
+
+			if(bumpcount != 2)
+				movedelta -= hitnormal * dot(movedelta, hitnormal);
+			else
+			{
+				glm::vec3 crossdir = cross(collidehistory[0], collidehistory[1]);
+				movedelta = crossdir * dot(crossdir, movedelta);
+			}
+
 
 			velocity -= hitnormal * dot(velocity, hitnormal) * float(t < 1.0);
 			
@@ -197,7 +213,7 @@ public:
 
 			movedelta *= glm::bvec3(glm::max(glm::abs(glm::vec3(movedelta)) - glm::vec3(1e-5), glm::vec3(0)));
 
-			if (fraction_left == 0) 
+			if (fraction_left == 0 || movedelta == glm::vec3(0)) 
 				break;
 		}
 
