@@ -1,0 +1,9 @@
+
+
+namespace KE
+{
+	class Client
+	{
+
+	};
+}

@@ -8,11 +8,16 @@
     },
     "glm",
     "sdl3",
+    {
+      "name": "sdl3",
+      "features": ["vulkan"]
+    },
     "glew",
     "stb",
     "miniz",
     "tinygltf",
     "tinyexr",
-    "vk-bootstrap"
+    "vk-bootstrap",
+    "shader-slang"
   ]
 }

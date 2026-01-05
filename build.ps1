@@ -12,11 +12,16 @@ param (
 # CONFIGURATIONS
 # =======================================
 $ROOT_FOLDER = "../"
-$GAME_FOLDER = "../game"
-$ENGINE_FOLDER = "../engine"
+$GAME_FOLDER = "../Game"
+$ENGINE_FOLDER = "../Engine"
 $BUILD_FOLDER = "../build"
+
+$GAME_BUILD_FOLDER = "../build"
+$ENGINE_BUILD_FOLDER = "./build"
+
+
 $BIN_FOLDER = "../build/bin"
-$DEFAULT_GAME_NAME = "CobaltGame"
+$DEFAULT_GAME_NAME = "KobaltGame"
 $CMAKE_GENERATOR = "Visual Studio 17 2022"
 $ARCH = "x64"
 
@@ -80,7 +85,7 @@ int main() {
     $DESTINATION_FILE = "../game/CMakeLists.txt"
 
     $content = Get-Content $TEMPLATE_FILE -Raw
-    $content = $content -replace "GAME_NAME", $GAME_NAME
+    #$content = $content -replace "GAME_NAME", $GAME_NAME
     $content | Set-Content $DESTINATION_FILE
 
     $content = Get-Content "vcpkg.json" -Raw
@@ -94,7 +99,7 @@ int main() {
     # Run CMake to generate solution
     Write-Host "Generating solution..."
     Push-Location "../"
-    cmake -G $CMAKE_GENERATOR -A $ARCH -S ./ -B ./ -T host=x64
+    cmake -G $CMAKE_GENERATOR -A $ARCH -S ./ -T host=x64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: CMake failed to generate the solution!"
         Pop-Location

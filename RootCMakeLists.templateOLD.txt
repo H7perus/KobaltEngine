@@ -3,23 +3,16 @@ cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 
-set(ENGINE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src)
-
-macro(kobalt_add_lib name)
-	file(GLOB_RECURSE SOURCES "*.cpp" "*.h")
-	file(GLOB_RECURSE SHARED "${ENGINE_FOLDER}/Shared/*.cpp" "${ENGINE_FOLDER}/Shared/*.h")
-
-	source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SOURCES})
-	source_group(TREE "${ENGINE_FOLDER}" FILES ${SHARED})
-
-	add_library(${name} SHARED 
-	${SOURCES}
-	${SHARED}
-	)
-
-endmacro()
 
 
+set(MY_INCLUDE_DIRS
+    engine/cobaltcore/src
+    engine/cobaltrenderer/src
+    ${Stb_INCLUDE_DIR}
+    ${TINYGLTF_INCLUDE_DIRS}
+    ${TINYEXR_INCLUDE_DIRS}
+    ${Vulkan_INCLUDE_DIRS}
+)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin/lib) #time to find out if this is right
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin/lib)
@@ -28,7 +21,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin)
 
-
+set(ENGINE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/engine)
 
 set(RENDERING_DEPENDENCIES
 	glm::glm
@@ -55,9 +48,10 @@ project(GAME_NAME)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${ENGINE_FOLDER}/Base/Include)
-include_directories(${ENGINE_FOLDER})
-
+add_subdirectory(engine/cobaltcore)
+add_subdirectory(engine/cobaltrenderer)
+add_subdirectory(game)
+#set(CMAKE_FIND_DEBUG_MODE 1)
 
 find_package(OpenGL REQUIRED)         # OpenGL comes from the system
 find_package(glm CONFIG REQUIRED) 
@@ -65,7 +59,6 @@ find_package(glm CONFIG REQUIRED)
 
 find_package(Vulkan REQUIRED)
 find_package(vk-bootstrap CONFIG REQUIRED)
-find_package(slang CONFIG REQUIRED)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
@@ -73,26 +66,16 @@ find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(miniz REQUIRED)
 
+target_include_directories( GAME_NAME PUBLIC ${MY_INCLUDE_DIRS})
+target_include_directories( cobaltcore PUBLIC ${MY_INCLUDE_DIRS})
 
-#ENGINE
-add_subdirectory(${ENGINE_FOLDER}/Base)
-add_subdirectory(${ENGINE_FOLDER}/Engine)
+#target_include_directories( cobaltrenderer PUBLIC ${TINYGLTF_INCLUDE_DIRS})
 
-#GAME
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Game)
+target_link_libraries(cobaltrenderer PRIVATE ${RENDERING_DEPENDENCIES})
 
-#ENGINE
-add_subdirectory(${ENGINE_FOLDER}/Client)
-add_subdirectory(${ENGINE_FOLDER}/Server)
-add_subdirectory(${ENGINE_FOLDER}/GpuInterface)
-add_subdirectory(${ENGINE_FOLDER}/Launcher)
-#add_subdirectory(game)
-#set(CMAKE_FIND_DEBUG_MODE 1)
+target_link_libraries(cobaltcore PRIVATE cobaltrenderer.lib ${RENDERING_DEPENDENCIES})
 
-
-#target_link_libraries(Launcher PRIVATE Base.lib)
-
-
+target_link_libraries(GAME_NAME PRIVATE cobaltrenderer.lib cobaltcore.lib ${RENDERING_DEPENDENCIES})
 
 
 

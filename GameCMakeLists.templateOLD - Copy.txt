@@ -1,24 +1,22 @@
 # CMakeLists.txt for the game directory
 
 # create the games target
-#add_executable(Game
-#	src/main.cpp
-#)
-
-kobalt_add_lib(Game)
+add_executable(GAME_NAME
+	src/main.cpp
+)
 
 
 find_package(SDL3 REQUIRED)
 find_package(GLEW REQUIRED)
 if (WIN32)
     add_custom_command(
-        TARGET Game POST_BUILD
+        TARGET GAME_NAME POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:Game>"
+        "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:GAME_NAME>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:GLEW::GLEW>" "$<TARGET_FILE_DIR:Game>"
+        "$<TARGET_FILE:GLEW::GLEW>" "$<TARGET_FILE_DIR:GAME_NAME>"
         VERBATIM
     )
 endif()
 
-set_target_properties(Game PROPERTIES FOLDER Game)
+set_target_properties(GAME_NAME PROPERTIES FOLDER Game)

@@ -366,6 +366,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+
+
 /cobaltcore/CMakeFiles
 /cobaltcore/cmake_install.cmake
 *.filters
@@ -378,3 +381,10 @@ FodyWeavers.xsd
 /build
 /cobaltcore/cobaltcore.dir/RelWithDebInfo
 /cobaltrenderer/cobaltrenderer.dir/RelWithDebInfo
+
+
+#clean git ignore stuff, anything before requires cleanup that I am too lazy to do rn
+
+*/**/CMakeFiles
+
+*.cmake
