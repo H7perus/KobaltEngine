@@ -1,21 +1,26 @@
 #pragma once
-#include <vulkan/vulkan.hpp>
-#include "memHelper.h"
 
 #include "Device.h"
+
+#include <vulkan/vulkan.hpp>
+#include "memHelper.h"
+#include <iostream>
+#include "VkBootstrap.h"
+
+#include "BasicTypeAliases.h"
+
 
 
 namespace KE::VK {
 	struct Buffer
 	{
-		friend class Device;
 		vk::Buffer buffer = VK_NULL_HANDLE;
 		vk::DeviceMemory memory = VK_NULL_HANDLE;
 		bool isMappable = false;
-		vk::BufferCreateInfo bufferInfo{};
-
-	private:
-		KE::VK::Device* device;
+		vk::BufferCreateInfo bufferCreateInfo{};
+	protected:
+		const KE::VK::Device* device_ = nullptr;
+		vk::DeviceAddressRangeEXT addressRange_;
 	public:
 		~Buffer()
 		{
@@ -23,35 +28,51 @@ namespace KE::VK {
 				destroy();
 		}
 		Buffer() {}
-		Buffer(KE::VK::Device* kedevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
-			
-			device = kedevice;
+		Buffer(KE::VK::Device const&  device_in, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) : device_(&device_in) {
 
-			bufferInfo.size = size;
-			bufferInfo.usage = usage;
-			bufferInfo.sharingMode = vk::SharingMode::eExclusive;
+			bufferCreateInfo.size = size;
+			bufferCreateInfo.usage = usage | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+			bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
 
-			if (device->device_.createBuffer(&bufferInfo, nullptr, &buffer) != vk::Result::eSuccess) {
+
+
+
+			if (((vk::Device)(*device_)).createBuffer(&bufferCreateInfo, nullptr, &buffer) != vk::Result::eSuccess) {
 				throw std::runtime_error("failed to create buffer!");
 			}
 
 			vk::MemoryRequirements memRequirements;
-			device->device_.getBufferMemoryRequirements(buffer, &memRequirements);
+			((vk::Device)(*device_)).getBufferMemoryRequirements(buffer, &memRequirements);
 
 			vk::MemoryAllocateInfo allocInfo{};
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = findMemoryType(*device, memRequirements.memoryTypeBits, vk::MemoryPropertyFlags(properties));
 
-			if (device->device_.allocateMemory(&allocInfo, nullptr, &memory) != vk::Result::eSuccess) {
+			vk::MemoryAllocateFlagsInfo flagsInfo;
+			flagsInfo.flags = vk::MemoryAllocateFlagBits::eDeviceAddress;
+
+			if (bufferCreateInfo.usage & vk::BufferUsageFlagBits::eShaderDeviceAddress)
+			{
+
+				allocInfo.pNext = &flagsInfo;
+			}
+				
+
+			allocInfo.allocationSize = memRequirements.size;
+			allocInfo.memoryTypeIndex = device_->FindMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlags(properties));
+
+			if (((vk::Device)(*device_)).allocateMemory(&allocInfo, nullptr, &memory) != vk::Result::eSuccess) {
 				throw std::runtime_error("failed to allocate buffer memory!");
 			}
 			if ((properties & vk::MemoryPropertyFlagBits::eHostVisible))
 				isMappable = true;
 
-			device->device_.bindBufferMemory(buffer, memory, 0);
+			((vk::Device)(*device_)).bindBufferMemory(buffer, memory, 0);
+
+
+			addressRange_.address = GetBufferAddress();
+			addressRange_.size = bufferCreateInfo.size;
 		}
 
-		Buffer(Buffer&& other) : buffer(other.buffer), memory(other.memory), isMappable(other.isMappable), bufferInfo(other.bufferInfo)
+		Buffer(Buffer&& other) : buffer(other.buffer), memory(other.memory), isMappable(other.isMappable), bufferCreateInfo(other.bufferCreateInfo), device_(other.device_), addressRange_(other.addressRange_)
 		{
 			other.buffer = VK_NULL_HANDLE;
 		}
@@ -67,16 +88,33 @@ namespace KE::VK {
 				}
 
 				// Transfer ownership of the resources of the new object
+				device_ = other.device_;
+				addressRange_ = other.addressRange_;
 				buffer = other.buffer;
 				memory = other.memory;
-				bufferInfo = other.bufferInfo;
+				bufferCreateInfo = other.bufferCreateInfo;
 				isMappable = other.isMappable;
-
 				other.buffer = VK_NULL_HANDLE;
 				other.memory = VK_NULL_HANDLE;
 			}
 			return *this;
 		}
+
+		vk::DescriptorBufferInfo GetDescriptorBufferInfo(u32 offset, u64 range)
+		{
+			return vk::DescriptorBufferInfo(buffer, offset, range);
+		}
+	protected:
+		vk::DeviceAddress GetBufferAddress()
+		{
+			return ((vk::Device)(*device_)).getBufferAddress(buffer);
+		}
+	public:
+		vk::DeviceAddressRangeEXT* GetBufferAddressRangePtr()
+		{
+			return &addressRange_;
+		}
+
 		void* map()
 		{
 			if (!isMappable)
@@ -85,23 +123,22 @@ namespace KE::VK {
 				std::terminate();
 			}
 			void* data;
-			data = device->device_.mapMemory(memory, 0, bufferInfo.size, vk::MemoryMapFlags(0));
+			data = ((vk::Device)(*device_)).mapMemory(memory, 0, bufferCreateInfo.size, vk::MemoryMapFlags(0));
 
 			return data;
 		}
 		void unmap()
 		{
-			device->device_.unmapMemory(memory);
+			((vk::Device)(*device_)).unmapMemory(memory);
 		}
 		void destroy()
 		{
 			if (buffer != VK_NULL_HANDLE)
 			{
-				device->device_.destroyBuffer(buffer, nullptr);
+				((vk::Device)(*device_)).destroyBuffer(buffer, nullptr);
 				if (memory == VK_NULL_HANDLE)
 					throw("literally HOW?");
-
-				device->device_.freeMemory(memory, nullptr);
+				((vk::Device)(*device_)).freeMemory(memory, nullptr);
 
 				buffer = VK_NULL_HANDLE;
 			}

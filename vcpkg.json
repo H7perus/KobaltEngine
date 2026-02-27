@@ -2,10 +2,6 @@
   "name": "kobaltengine",
   "version": "1.0",
   "dependencies": [
-    {
-            "name": "imgui",
-            "features": ["sdl3-binding", "vulkan-binding", "opengl3-binding"]
-    },
     "glm",
     "sdl3",
     {
@@ -16,8 +12,6 @@
     "stb",
     "miniz",
     "tinygltf",
-    "tinyexr",
-    "vk-bootstrap",
-    "shader-slang"
+    "tinyexr"
   ]
 }

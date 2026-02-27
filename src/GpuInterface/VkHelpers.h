@@ -10,24 +10,30 @@
 #include "SDL3/SDL_vulkan.h"
 #include "BasicTypeAliases.h"
 
+#include "Types/Device.h"
 
 
 
-vkb::Instance createInstance()
+inline vkb::Instance createInstance()
 {
 	u32 count;
 	SDL_Vulkan_GetInstanceExtensions(&count);
-
+	vkb::Instance vkb_inst_;
 	vkb::InstanceBuilder builder;
-
-	auto inst_ret = builder.set_app_name("Example Vulkan Application")
-		.request_validation_layers()
-		.require_api_version(1, 4)
-		//.use_default_debug_messenger()
-		.build();
-	if (!inst_ret) { /* report */ }
-
-	vkb::Instance vkb_inst_ = inst_ret.value();
+	try 
+	{
+		auto inst_ret = builder.set_app_name("Example Vulkan Application")
+			.request_validation_layers()
+			.require_api_version(1, 4, 341)
+			//.use_default_debug_messenger()
+			.build();
+		if (!inst_ret) { throw std::runtime_error("Failed to create instance: " + inst_ret.error().message()); }
+		vkb_inst_ = inst_ret.value();
+	}
+	catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+	}
+	
 
 	printf("API Version: %d.%d.%d\n",
 		VK_VERSION_MAJOR(vkb_inst_.api_version),
@@ -40,7 +46,7 @@ vkb::Instance createInstance()
 	return vkb_inst_;
 }
 
-void createSurface(vk::SurfaceKHR& surface, SDL_Window* window, vk::Instance instance)
+inline void createSurface(vk::SurfaceKHR& surface, SDL_Window* window, vk::Instance instance)
 {
 
 	//SUS: weirded out by instance having to be created with the SDL extensions when it works fine without. Weird...
@@ -51,10 +57,12 @@ void createSurface(vk::SurfaceKHR& surface, SDL_Window* window, vk::Instance ins
 
 
 //TODO: We need to be able to pass requirements for the device.
-vkb::Device createDevice(vkb::Instance vkb_inst)
+inline vkb::Device createDevice(vkb::Instance vkb_inst)
 {
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
 	auto phys_ret = selector//.set_surface(NULL)
+		.add_required_extension("VK_EXT_descriptor_heap")
+		.add_required_extension("VK_KHR_shader_untyped_pointers")
 		.set_minimum_version(1, 4)
 		.require_present(false)
 		.select();
@@ -63,22 +71,27 @@ vkb::Device createDevice(vkb::Instance vkb_inst)
 		std::cerr << "Error message: " << phys_ret.error().message() << std::endl;
 	}
 
-	vk::PhysicalDeviceVulkan13Features features;
-	features.dynamicRendering = VK_TRUE;
+	vk::PhysicalDeviceVulkan13Features features13;
+	features13.dynamicRendering = VK_TRUE;
 
-	vk::PhysicalDeviceVulkan14Features feat2;
+	vk::PhysicalDeviceDescriptorHeapFeaturesEXT descHeapFeatures;
+	descHeapFeatures.descriptorHeap = VK_TRUE;
 
-	//vk::PhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeat;
-	//shaderObjectFeat.shaderObject = VK_TRUE;
+	vk::PhysicalDeviceShaderUntypedPointersFeaturesKHR untypedPtrFeatures;
+	untypedPtrFeatures.shaderUntypedPointers = VK_TRUE;
 
-	//vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT DynamicStateFeat;
-	//DynamicStateFeat.extendedDynamicState3RasterizationSamples = VK_TRUE;
-
+	vk::PhysicalDeviceVulkan12Features features12;
+	features12.bufferDeviceAddress = VK_TRUE;
+	features12.runtimeDescriptorArray = VK_TRUE;
 
 	vkb::DeviceBuilder device_builder{ phys_ret.value() };
 	auto dev_ret = device_builder
-		.add_pNext(&features)
-		//.add_pNext(&shaderObjectFeat)
+		.add_pNext(&features12)
+		.add_pNext(&features13)
+		.add_pNext(&descHeapFeatures)
+		.add_pNext(&untypedPtrFeatures)  // also need this one
+		//.enable_extension("VK_EXT_descriptor_heap")
+		//.enable_extension("VK_KHR_shader_untyped_pointers")
 		//.add_pNext(&DynamicStateFeat)
 		.build();
 	if (!dev_ret) { /* report */ }
@@ -92,21 +105,21 @@ vkb::Device createDevice(vkb::Instance vkb_inst)
 
 //THESE NEXT THREE NEED WORKOVER, THIS CAN NOT PROPERLY SUPPORT ASYNC/DIFFERING PRIORITIES ON DIFFERENT QUEUES
 
-auto getGraphicsQueue(vkb::Device device)
+inline auto getGraphicsQueue(vkb::Device device)
 {
 	auto graphics_queue_ret = device.get_queue(vkb::QueueType::graphics);
 	if (!graphics_queue_ret) { /* report */ }
 	return vk::Queue(graphics_queue_ret.value());
 }
 
-auto getComputeQueue(vkb::Device device)
+inline auto getComputeQueue(vkb::Device device)
 {
 	auto compute_queue_ret = device.get_queue(vkb::QueueType::compute);
 	if (!compute_queue_ret) { /* report */ }
 	return vk::Queue(compute_queue_ret.value());
 }
 
-auto getPresentQueue(vkb::Device device)
+inline auto getPresentQueue(vkb::Device device)
 {
 	auto present_queue_ret = device.get_queue(vkb::QueueType::present);
 	if (!present_queue_ret) { std::cout << present_queue_ret.error() << std::endl; }
@@ -124,7 +137,7 @@ struct QueueFamilyIndices {
 	}
 };
 
-QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) {
+inline QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) {
 	QueueFamilyIndices indices;
 
 	uint32_t queueFamilyCount = 0;
@@ -155,7 +168,7 @@ QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) {
 }
 
 
-vk::CommandPool createComputeCommandPool(vkb::Device device) {
+inline vk::CommandPool createComputeCommandPool(vkb::Device device) {
 	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vk::PhysicalDevice(device.physical_device));
 
 	vk::CommandPoolCreateInfo poolInfo{};
@@ -176,7 +189,7 @@ vk::CommandPool createComputeCommandPool(vkb::Device device) {
 	return pool;
 }
 
-vk::DescriptorSetLayout createDescriptorSetLayout(vkb::Device vkboot_device)
+inline vk::DescriptorSetLayout createDescriptorSetLayout(vkb::Device vkboot_device)
 {
 	vk::DescriptorSetLayoutBinding binding;
 	binding.binding = 0;  // matches binding = 0 in shader
@@ -185,6 +198,7 @@ vk::DescriptorSetLayout createDescriptorSetLayout(vkb::Device vkboot_device)
 	binding.stageFlags = vk::ShaderStageFlagBits::eCompute;  // used in compute shader
 	binding.pImmutableSamplers = nullptr;  // only for samplers
 
+
 	vk::DescriptorSetLayoutCreateInfo layoutInfo;
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &binding;
@@ -192,7 +206,7 @@ vk::DescriptorSetLayout createDescriptorSetLayout(vkb::Device vkboot_device)
 	return vk::Device(vkboot_device.device).createDescriptorSetLayout(layoutInfo);
 }
 
-vk::PipelineLayout createPipelineLayout(vkb::Device vkboot_device, vk::DescriptorSetLayout& DSL)
+inline vk::PipelineLayout createPipelineLayout(vkb::Device vkboot_device, vk::DescriptorSetLayout& DSL)
 {
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
 	pipelineLayoutInfo.setLayoutCount = 1;
@@ -203,7 +217,7 @@ vk::PipelineLayout createPipelineLayout(vkb::Device vkboot_device, vk::Descripto
 	return vk::Device(vkboot_device).createPipelineLayout(pipelineLayoutInfo);
 }
 
-vk::ShaderModule createShaderModule(KE::VK::Device device, const char* code, int size) {
+inline vk::ShaderModule createShaderModule(KE::VK::Device device, const char* code, int size) {
 	vk::ShaderModuleCreateInfo createInfo{};
 	createInfo.codeSize = size;
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(code);
@@ -214,7 +228,7 @@ vk::ShaderModule createShaderModule(KE::VK::Device device, const char* code, int
 	return shaderModule;
 }
 
-vk::Pipeline createComputePipeline(vk::PipelineLayout pipelineLayout, std::vector<char> spirvCode, vkb::Device vkboot_device)
+inline vk::Pipeline createComputePipeline(vk::PipelineLayout pipelineLayout, std::vector<char> spirvCode, vkb::Device vkboot_device)
 {
 
 	vk::Device device = vk::Device(vkboot_device.device);
@@ -222,7 +236,7 @@ vk::Pipeline createComputePipeline(vk::PipelineLayout pipelineLayout, std::vecto
 	vk::ShaderModuleCreateInfo shaderModuleInfo;
 	shaderModuleInfo.codeSize = spirvCode.size();
 	shaderModuleInfo.pCode = reinterpret_cast<const u32*>(spirvCode.data());
-	std::cout << "Magic number: 0x" << std::hex << reinterpret_cast<const u32*>(spirvCode.data())[0] << std::endl;
+	std::cout << "Magic number: 0x" << std::hex << reinterpret_cast<const u32*>(spirvCode.data())[0] << std::dec << std::endl;
 	vk::ShaderModule shaderModule = device.createShaderModule(shaderModuleInfo);
 
 	// Create the compute pipeline
@@ -247,7 +261,7 @@ vk::Pipeline createComputePipeline(vk::PipelineLayout pipelineLayout, std::vecto
 	return result.value;
 }
 
-vk::DescriptorPool createDescriptorPool(vkb::Device vkboot_device)
+inline vk::DescriptorPool createDescriptorPool(vkb::Device vkboot_device)
 {
 	vk::DescriptorPoolSize poolSize;
 	poolSize.type = vk::DescriptorType::eStorageBuffer;
@@ -261,7 +275,7 @@ vk::DescriptorPool createDescriptorPool(vkb::Device vkboot_device)
 	return vk::Device(vkboot_device.device).createDescriptorPool(poolInfo);
 }
 
-vk::DescriptorSet createDescriptorSet(vkb::Device vkboot_device, vk::DescriptorPool descriptorPool, vk::DescriptorSetLayout descriptorSetLayout)
+inline vk::DescriptorSet createDescriptorSet(vkb::Device vkboot_device, vk::DescriptorPool descriptorPool, vk::DescriptorSetLayout descriptorSetLayout)
 {
 	vk::DescriptorSetAllocateInfo allocInfo;
 	allocInfo.descriptorPool = descriptorPool;
@@ -272,7 +286,7 @@ vk::DescriptorSet createDescriptorSet(vkb::Device vkboot_device, vk::DescriptorP
 	return descriptorSets[0];
 }
 
-void updateDescriptorSet(vkb::Device vkboot_device, vk::Buffer buffer, vk::DescriptorSet descriptorSet)
+inline void updateDescriptorSet(vkb::Device vkboot_device, vk::Buffer buffer, vk::DescriptorSet descriptorSet)
 {
 	vk::DescriptorBufferInfo bufferInfo;
 	bufferInfo.buffer = buffer;  // the vk::Buffer you created
@@ -291,7 +305,7 @@ void updateDescriptorSet(vkb::Device vkboot_device, vk::Buffer buffer, vk::Descr
 	vk::Device(vkboot_device.device).updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
 }
 
-vk::CommandBuffer allocateCommandBuffer(vkb::Device vkboot_device, vk::CommandPool commandPool)
+inline vk::CommandBuffer allocateCommandBuffer(vkb::Device vkboot_device, vk::CommandPool commandPool)
 {
 	vk::CommandBufferAllocateInfo allocInfo;
 	allocInfo.commandPool = commandPool;  // compute command pool from earlier

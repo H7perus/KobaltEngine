@@ -14,8 +14,16 @@ set_target_properties(GpuInterface PROPERTIES
 # Specify the include directories so that other projects can use this module's headers
 target_include_directories(GpuInterface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(GpuInterface PRIVATE Base)
-target_link_libraries(GpuInterface PUBLIC ${Vulkan_LIBRARIES} vk-bootstrap::vk-bootstrap slang::slang)
 
+target_link_libraries(GpuInterface PRIVATE
+    $<$<CONFIG:Debug>:$ENV{VULKAN_SDK}/Lib/shaderc_combinedd.lib>
+    $<$<CONFIG:Release>:$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib>
+)
+
+target_link_libraries(GpuInterface PUBLIC ${Vulkan_LIBRARIES} vk-bootstrap::vk-bootstrap slang::slang)
+target_include_directories(GpuInterface PUBLIC 
+    ${vk-bootstrap_SOURCE_DIR}/src
+)
 
 target_link_libraries(GpuInterface PUBLIC SDL3::SDL3)
 

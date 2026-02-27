@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
+set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+project(GAME_NAME)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 #set(CMAKE_FIND_DEBUG_MODE TRUE)
 
-set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+
+
+set(Vulkan_DIR "" CACHE PATH "" FORCE)
+set(Vulkan_ROOT "" CACHE PATH "" FORCE)
+set(CMAKE_DISABLE_FIND_PACKAGE_Vulkan OFF)
 
 set(ENGINE_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src)
 
@@ -9,8 +18,8 @@ macro(kobalt_add_lib name)
 	file(GLOB_RECURSE SOURCES "*.cpp" "*.h")
 	file(GLOB_RECURSE SHARED "${ENGINE_FOLDER}/Shared/*.cpp" "${ENGINE_FOLDER}/Shared/*.h")
 
-	source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SOURCES})
-	source_group(TREE "${ENGINE_FOLDER}" FILES ${SHARED})
+	#source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SOURCES})
+	#source_group(TREE "${ENGINE_FOLDER}" FILES ${SHARED})
 
 	add_library(${name} SHARED 
 	${SOURCES}
@@ -30,12 +39,36 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin)
 
 
 
+
+include(FetchContent)
+
+FetchContent_Declare(
+  vk-bootstrap
+  GIT_REPOSITORY https://github.com/charles-lunarg/vk-bootstrap.git
+  GIT_TAG        v1.4.342  # check their releases for the latest
+  GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(vk-bootstrap)
+
+
+FetchContent_Declare(
+  slang
+  GIT_REPOSITORY 	https://github.com/csyonghe/slang.git
+  GIT_TAG		ext_descriptor_heap
+  GIT_SHALLOW    FALSE
+)
+FetchContent_MakeAvailable(slang)
+target_compile_options(slang PRIVATE -O3)
+
+
+
+
 set(RENDERING_DEPENDENCIES
 	glm::glm
 	SDL3::SDL3
 	GLEW::GLEW
 	miniz::miniz
-	imgui::imgui
 	vk-bootstrap::vk-bootstrap
 	vk-bootstrap::vk-bootstrap-compiler-warnings
 	${Vulkan_LIBRARIES}
@@ -51,9 +84,7 @@ set(LIBS_TO_LINK
 #list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/sdl2")
 #list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/vcpkg_installed/x64-windows/share/glew")
 
-project(GAME_NAME)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 include_directories(${ENGINE_FOLDER}/Base/Include)
 include_directories(${ENGINE_FOLDER})
@@ -62,14 +93,16 @@ include_directories(${ENGINE_FOLDER})
 find_package(OpenGL REQUIRED)         # OpenGL comes from the system
 find_package(glm CONFIG REQUIRED) 
 
-
+set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
+set(Vulkan_INCLUDE_DIR "$ENV{VULKAN_SDK}/Include")
+include_directories(BEFORE "$ENV{VULKAN_SDK}/Include")
 find_package(Vulkan REQUIRED)
-find_package(vk-bootstrap CONFIG REQUIRED)
-find_package(slang CONFIG REQUIRED)
+
+
+#find_package(slang CONFIG REQUIRED)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(miniz REQUIRED)
 

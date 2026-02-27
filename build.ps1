@@ -22,7 +22,7 @@ $ENGINE_BUILD_FOLDER = "./build"
 
 $BIN_FOLDER = "../build/bin"
 $DEFAULT_GAME_NAME = "KobaltGame"
-$CMAKE_GENERATOR = "Visual Studio 17 2022"
+$CMAKE_GENERATOR = "Visual Studio 18 2026"
 $ARCH = "x64"
 
 
@@ -73,7 +73,7 @@ int main() {
     }
 
     # Create CMakeLists.txt in the game folder
-    $TEMPLATE_FILE = "RootCMakeLists.template.txt"
+    $TEMPLATE_FILE = "BuildTemplates/RootCMakeLists.template.txt"
     $DESTINATION_FILE = "../CMakeLists.txt"
 
     Write-Host "Creating the CMakeLists.txt by replacing placeholders"
@@ -81,7 +81,7 @@ int main() {
     $content = $content -replace "GAME_NAME", $GAME_NAME
     $content | Set-Content $DESTINATION_FILE
 
-    $TEMPLATE_FILE = "GameCMakeLists.template.txt"
+    $TEMPLATE_FILE = "BuildTemplates/GameCMakeLists.template.txt"
     $DESTINATION_FILE = "../game/CMakeLists.txt"
 
     $content = Get-Content $TEMPLATE_FILE -Raw
@@ -99,7 +99,7 @@ int main() {
     # Run CMake to generate solution
     Write-Host "Generating solution..."
     Push-Location "../"
-    cmake -G $CMAKE_GENERATOR -A $ARCH -S ./ -T host=x64
+    cmake -G $CMAKE_GENERATOR -A $ARCH -S ./ -B ./build -T host=x64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: CMake failed to generate the solution!"
         Pop-Location

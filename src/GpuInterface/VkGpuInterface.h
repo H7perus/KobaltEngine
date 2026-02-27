@@ -7,13 +7,17 @@
 #include <vulkan/vulkan.hpp>
 #include "VkBootstrap.h"
 
+#include "Types/DeviceManager.h"
 #include "Types/Device.h"
+#include "Types/Buffer.h"
+#include "Types/PipelineGraphics.h"
+#include "Types/Swapchain.h"
 
 #include "SDL3/SDL.h"
 
 namespace KE
 {
-	class RENDERER_DLL_API VkGpuInterface : public IGpuInterface
+	class GPUI_DLL_API VkGpuInterface : public IGpuInterface
 	{
 	
 		KE_SYSTEM(VkRenderer);
@@ -26,17 +30,20 @@ namespace KE
 		virtual u64 GetSDLWindowFlag() override;
 
 
-	private:
+	public:
 		vkb::Instance vkboot_inst_;
 		vk::Instance vk_inst_;
 
-		KE::VK::Device device_ = KE::VK::Device();
+		//KE::VK::Device device_ = KE::VK::Device();
+		KE::VK::DeviceManager deviceManager_ = KE::VK::DeviceManager();
 
 		vk::Queue graphics_queue_;
 		vk::Queue compute_queue_;
 
 		vk::CommandPool computeCmdPool;
 
-		vk::SurfaceKHR surface;
+		VK::Buffer vertexBuffer;
+		VK::PipelineGraphics testPipeline = VK::PipelineGraphics();
+		VK::Swapchain swapchain_;
 	};
 }

@@ -46,7 +46,7 @@ namespace KE
 
 		timeBeginPeriod(1);
 		Duration current = GlobalClock::QueryGlobalTime();
-		Duration end = current + nanos;
+		Duration end = current + Duration(nanos);
 
 		std::this_thread::sleep_for( std::chrono::nanoseconds( std::max( nanos - i64(3e6), i64(0) ) ) );
 

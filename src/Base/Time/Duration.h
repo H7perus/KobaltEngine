@@ -29,6 +29,8 @@ namespace KE
 		Duration operator+(const Duration& other) const {
 			return Duration{ nanos + other.nanos };
 		}
+
+
 		Duration operator-(const Duration& other) const {
 			assert(nanos - other.nanos <= nanos);
 			return Duration{ nanos - other.nanos };

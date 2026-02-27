@@ -1,8 +1,25 @@
-[[vk::binding(0)]]RWStructuredBuffer<int32_t> outputBuffer;
+#language slang 2025
+
+//struct PushConstants
+//{
+//    DescriptorHandle<RWStructuredBuffer<int>> buffer;
+//};
+
+//[vk::push_constant]
+//PushConstants pc;
 
 [shader("compute")]
-[numthreads(8, 8, 1)]
-void computeMain(uint3 dispatchThreadID : SV_DispatchThreadID)
+[numthreads(64, 1, 1)]
+void computeMain(
+    uint3 dispatchThreadID : SV_DispatchThreadID,
+    uint3 groupThreadID : SV_GroupThreadID,
+    uint  groupIndex : SV_GroupIndex
+)
 {
-    outputBuffer[dispatchThreadID.x + 8 * dispatchThreadID.y] = 7 - dispatchThreadID.x;
+    uint2 index = uint2(6048 * 16, 0);
+
+    DescriptorHandle<RWStructuredBuffer<int>> buffer = reinterpret<DescriptorHandle<RWStructuredBuffer<int>>, uint2>(index);
+
+
+    buffer[dispatchThreadID.x] = dispatchThreadID.x;
 }

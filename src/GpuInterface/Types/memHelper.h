@@ -1,10 +1,11 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
-
-uint32_t findMemoryType(KE::VK::Device& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
-	vk::PhysicalDevice physicalDevice = vk::PhysicalDevice(device);
+#include "VkBootstrap.h"
 
 
+inline uint32_t findMemoryType(vkb::Device device, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+
+	vk::PhysicalDevice physicalDevice = vk::PhysicalDevice(device.physical_device);
 	vk::PhysicalDeviceMemoryProperties memProperties;
 
 	physicalDevice.getMemoryProperties(&memProperties);

@@ -2,16 +2,33 @@
 #include "VkGpuInterface.h"
 #include "VkHelpers.h"
 
+#include "glm/glm.hpp"
+
 #include "Types/Buffer.h"
+#include "Types/DescriptorHeapBuffer.h"
+#include "Types/PipelineGraphics.h"
+#include "Types/PipelineCompute.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 
-#include "Functional/ShaderCompile.h"
+#include "ShaderCompile/ShaderCompile.h"
+#include "ShaderCompile/SlangCompileContext.h"
+#include "ShaderCompile/SlangCompiledUnit.h"
 
+#include "ShaderCompile/GlslShaderCompile.h"
 
 #include <string>
 
+
+f32 vertexInfo[] = 
+{
+	 0.0, -1.0, -0.5, 1.0, 0.0, 0.0,  0.5, 0.0,
+	 -1.0,  1.0, -0.5, 0.0, 1.0, 0.0, -1.0, 1.0,
+	 1.0,  1.0, -0.5, 0.0, 1.0, 0.0,  1.0, 1.0
+};
+
+int vertexIndices[] = { 0, 1, 2 };
 
 
 void KE::VkGpuInterface::Init()
@@ -20,63 +37,67 @@ void KE::VkGpuInterface::Init()
 
 	vk_inst_ = vkboot_inst_.instance;
 
-	device_ = KE::VK::Device(createDevice(vkboot_inst_));
+	deviceManager_ = KE::VK::DeviceManager(createDevice(vkboot_inst_));
 
 
-	graphics_queue_ = getGraphicsQueue(device_);
-	compute_queue_ = getComputeQueue(device_);
+	graphics_queue_ = deviceManager_.GetGraphicsQueue();
+	compute_queue_ = deviceManager_.GetComputeQueue();
 
-	computeCmdPool = createComputeCommandPool(device_);
+	computeCmdPool = deviceManager_.CreateComputeCommandPool();
 
-	VK::Buffer buff = VK::Buffer(&device_, 1024, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+	VK::Buffer buff = VK::Buffer(deviceManager_.device_, 1024, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-	vk::DescriptorSetLayout DSLayout = createDescriptorSetLayout(device_);
-
-	vk::PipelineLayout PLayout = createPipelineLayout(device_, DSLayout);
-	std::vector<char> shaderCode;
-
-	try
-	{
-		shaderCode = readFile("../../../../Engine/src/GpuInterface/shaders/slangcompute.slang");
-	}
-	catch (const std::runtime_error& e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-
-	std::cout << shaderCode.data() << std::endl;
-
-	ShaderCompileSetup();
-
-	CompileShader("../../../../Engine/src/GpuInterface/shaders/slangcompute.slang");
-
-	createShaderModule(device_, (char*)spirvCode->getBufferPointer(), spirvCode->getBufferSize());
-
-	std::vector<char> spirvCodeChar((char*)spirvCode->getBufferPointer(), (char*)spirvCode->getBufferPointer() + spirvCode->getBufferSize());
-
-	vk::Pipeline cPipeline = createComputePipeline(PLayout, spirvCodeChar, device_);
-
-	vk::DescriptorPool descPool = createDescriptorPool(device_);
-
-	vk::DescriptorSet descSet = createDescriptorSet(device_, descPool, DSLayout);
+	
+	std::shared_ptr<VK::BufferSet> bufferset = deviceManager_.RequestNamedBufferSet("TestBuffer", 1024, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 
-	// Describe the buffer
-	vk::DescriptorBufferInfo bufferInfo;
-	bufferInfo.buffer = buff.buffer;  // your vk::Buffer
-	bufferInfo.offset = 0;
-	bufferInfo.range = VK_WHOLE_SIZE;  // or specific size like 1024
+	KE::VK::SlangCompileContext compileContext;
 
-	// Write to descriptor set
-	vk::WriteDescriptorSet descriptorWrite;
-	descriptorWrite.dstSet = descSet;
-	descriptorWrite.dstBinding = 0;  // which binding in the layout
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = vk::DescriptorType::eStorageBuffer;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
+	SlangCompiledUnit slangShader = compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/slangcompute.slang");
 
-	vk::Device(device_).updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+	SlangCompiledUnit slangGraphicsShader = compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/combinedVertFrag.slang");
+
+
+	Slang::ComPtr<slang::IBlob> blob = slangShader.getTargetCode();
+
+	auto glslComputeSpv = CompileGlslShader("../../../../../../Engine/src/GpuInterface/shaders/glslcompute.comp", shaderc_compute_shader);
+	std::ofstream file("spvDescriptorHeapTEST2.spv", std::ios::binary);
+	file.write((char*)blob.get()->getBufferPointer(), blob.get()->getBufferSize());
+	file.close();
+	
+
+
+	KE::VK::PipelineCompute pipeline(deviceManager_.device_, slangShader);
+
+	testPipeline = KE::VK::PipelineGraphics(deviceManager_.device_, slangGraphicsShader);
+	vertexBuffer = KE::VK::Buffer(deviceManager_.device_, sizeof(vertexInfo), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+	f32* mappedVertBuffer = (float*)vertexBuffer.map();
+	memcpy(vertexInfo, mappedVertBuffer, sizeof(vertexInfo));
+	vertexBuffer.unmap();
+	vk::DescriptorPool descPool = createDescriptorPool(deviceManager_.device_);
+
+	std::shared_ptr<VK::BufferSet> bufferAttach = deviceManager_.GetBufferSetByName("TestBuffer");
+	
+
+	vk::PhysicalDeviceDescriptorHeapPropertiesEXT heapProps;
+	vk::PhysicalDeviceProperties2 props2;
+	props2.pNext = &heapProps;
+	((vk::PhysicalDevice)deviceManager_.device_).getProperties2(&props2);
+
+	
+
+	vk::DeviceSize bufDescSize = heapProps.bufferDescriptorSize;
+	vk::DeviceSize reservedRange = heapProps.minResourceHeapReservedRange;
+
+
+	KE::VK::DescriptorHeapBuffer descriptorHeap(deviceManager_.device_, 64, KE::VK::DescriptorHeapType::ResourceHeap);
+	
+	vk::ResourceDescriptorInfoEXT resInfo;
+	resInfo.type = vk::DescriptorType::eStorageBuffer;
+	resInfo.data.pAddressRange = buff.GetBufferAddressRangePtr();
+
+	descriptorHeap.EnterDescriptor(&resInfo);
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -87,29 +108,25 @@ void KE::VkGpuInterface::Init()
 	allocInfo.level = vk::CommandBufferLevel::ePrimary;
 	allocInfo.commandBufferCount = 1;
 
-	vk::CommandBuffer commandBuffer = vk::Device(device_).allocateCommandBuffers(allocInfo)[0];
+	vk::CommandBuffer commandBuffer = vk::Device(deviceManager_.device_).allocateCommandBuffers(allocInfo)[0];
 
 	commandBuffer.begin(beginInfo);
 
-	// Bind pipeline
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, cPipeline);
+	glm::uvec2 pushIndex = glm::uvec2(6048, 6048);
 
-	// Bind descriptor sets
-	commandBuffer.bindDescriptorSets(
-		vk::PipelineBindPoint::eCompute,
-		PLayout,
-		0,  // first set
-		1,  // descriptor set count
-		&descSet,
-		0,  // dynamic offset count
-		nullptr
-	);
+	vk::PushDataInfoEXT pushInfo{};
+	pushInfo.offset = 0;
+	pushInfo.data.address = &pushIndex;
+	pushInfo.data.size = sizeof(pushIndex);
 
-	// Dispatch compute work
-	// vkCmdDispatch(groupCountX, groupCountY, groupCountZ)
-	// If shader has [numthreads(8, 8, 1)] and you want 64x64 threads total:
-	// groupCount = 64/8 = 8 in each dimension
-	commandBuffer.dispatch(1, 16, 1);
+
+	commandBuffer.pushDataEXT(&pushInfo);
+
+	commandBuffer.bindResourceHeapEXT(descriptorHeap.GetBindInfo());
+
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
+
+	commandBuffer.dispatch(4, 1, 1);
 
 	// End recording
 	commandBuffer.end();
@@ -122,14 +139,12 @@ void KE::VkGpuInterface::Init()
 	compute_queue_.submit(1, &submitInfo, nullptr);  // no fence for now
 	compute_queue_.waitIdle();  // wait for completion (blocking)
 	
-	u32* numberPointer = (u32*)buff.map();
-
+	u32* numberPointer = (u32*)(buff.map());
+	
 
 	for (int i = 0; i < 1024 / 4; i++)
 		std::cout << numberPointer[i] << std::endl;
 
-
-	std::printf("seems to go right \n");
 }
 
 

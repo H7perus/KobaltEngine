@@ -44,7 +44,8 @@ void diagnoseIfNeeded(slang::IBlob* diagnosticsBlob)
 {
     if (diagnosticsBlob != nullptr)
     {
-        std::cout << (const char*)diagnosticsBlob->getBufferPointer() << std::endl;
+        std::cout << std::hex << (const char*)diagnosticsBlob->getBufferPointer() << std::endl;
+        diagnosticsBlob->Release();
     }
 }
 
@@ -93,7 +94,8 @@ void CompileShader(std::string path)
         //testmod = session->loadModule("testmod"); //loadModuleFromSourceString(0, 0, shaderSource, diagnosticsBlob.writeRef());
 
         slangModule = session->loadModule(path.c_str(), diagnosticsBlob.writeRef()); //loadModuleFromSourceString(0, 0, shaderSource, diagnosticsBlob.writeRef());
-        std::cout << shaderSource << std::endl;
+
+        //std::cout << shaderSource << std::endl;
         diagnoseIfNeeded(diagnosticsBlob);
         if (!slangModule)
         {
@@ -103,8 +105,12 @@ void CompileShader(std::string path)
         }
     }
 
+
     std::array<slang::IComponentType*, 1> componentTypes = { slangModule.get()};
     Slang::ComPtr<slang::IComponentType> composedProgram;
+
+
+
     {
         Slang::ComPtr<slang::IBlob> diagnosticsBlob;
 
@@ -122,8 +128,66 @@ void CompileShader(std::string path)
         }
     }
     {
-        Slang::ComPtr<slang::IBlob> diagnosticsBlob;
-        SlangResult result = composedProgram->getTargetCode(0, spirvCode.writeRef());
+        auto layout = composedProgram->getLayout();
+
+        auto globalParams = layout->getGlobalParamsTypeLayout();
+        
+        int fieldCount = globalParams->getFieldCount();
+        
+        for (unsigned i = 0; i < fieldCount; i++)
+        {
+            slang::VariableLayoutReflection* field = globalParams->getFieldByIndex(i);
+
+            const char* name = field->getVariable()->getName();
+            slang::TypeLayoutReflection* typeLayout = field->getTypeLayout();
+            slang::TypeReflection* type = typeLayout->getType();
+
+            // Get binding information
+            unsigned binding = field->getBindingIndex();
+            unsigned space = field->getBindingSpace();
+
+            // Check what kind of resource this is
+            slang::TypeReflection::Kind kind = type->getKind();
+
+            switch (kind) {
+            case slang::TypeReflection::Kind::ConstantBuffer:
+                printf("ConstantBuffer: %s, binding=%d, space=%d\n", name, binding, space);
+                break;
+
+            case slang::TypeReflection::Kind::Resource:
+            {
+                // Check resource shape/type
+                SlangResourceShape shape = type->getResourceShape();
+                SlangResourceAccess access = type->getResourceAccess();
+
+                slang::TypeReflection* resourceResultType = type->getResourceResultType();
+
+                if (shape & SLANG_TEXTURE_COMBINED_FLAG && (shape & SLANG_TEXTURE_2D)) {
+                    printf("Texture2D: %s, binding=%d, space=%d, type=%s\n", name, binding, space, resourceResultType->getName());
+                }
+                else if (shape == SLANG_STRUCTURED_BUFFER) {
+                    ISlangBlob* fullName;
+
+                    type->getFullName(&fullName);
+                    printf("StructuredBuffer: %s, binding=%d, space=%d, type=%s\n", name, binding, space, resourceResultType->getName());
+                }
+                else
+                {
+                    printf("resource is neither :(\n");
+                }
+                break;
+            }
+            case slang::TypeReflection::Kind::SamplerState:
+                printf("SamplerState: %s, binding=%d, space=%d\n", name, binding, space);
+                break;
+
+            case slang::TypeReflection::Kind::Struct:
+                printf("Uniform/Push Constant: %s\n", name);
+                break;
+            }
+        }
+			Slang::ComPtr<slang::IBlob> diagnosticsBlob;
+			SlangResult result = composedProgram->getTargetCode(0, spirvCode.writeRef());
         diagnoseIfNeeded(diagnosticsBlob);
         if (SLANG_FAILED(result))
         {
