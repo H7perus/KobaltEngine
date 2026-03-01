@@ -1,7 +1,34 @@
+
 #include "Frame.h"
 
-
-void KE::VK::Frame::Begin()
+void KE::VK::Frame::Init(KE::VK::Device &device) 
 {
-    //device_.waitForFences(inFlightFence_, vk::True, UINT64_MAX);
+    commandPool_ = device.CreateGraphicsCommandPool();
+    commandBuffer_ = device.GetVkDevice().allocateCommandBuffers({commandPool_, vk::CommandBufferLevel::ePrimary, 1})[0];
+
+    vk::FenceCreateInfo fenceInfo{vk::FenceCreateFlagBits::eSignaled};
+    inFlightFence_ = device.GetVkDevice().createFence(fenceInfo);
+    
+    vk::SemaphoreCreateInfo semaphoreInfo{};
+    imageAvailableSemaphore_ = device.GetVkDevice().createSemaphore(semaphoreInfo);
+
+    renderFinishedSemaphore_ = device.GetVkDevice().createSemaphore(semaphoreInfo);
+}
+
+void KE::VK::Frame::Destroy(KE::VK::Device &device) 
+{
+    device.GetVkDevice().destroySemaphore(imageAvailableSemaphore_);
+    device.GetVkDevice().destroySemaphore(renderFinishedSemaphore_);
+    device.GetVkDevice().destroyFence(inFlightFence_);
+    device.GetVkDevice().destroyCommandPool(commandPool_);
+}
+
+
+// TODO: This could be a stored part of the frame, no?
+vk::SubmitInfo *KE::VK::Frame::GetSubmitInfoPtr() {
+  submitInfo_.waitSemaphoreCount = 1;
+  submitInfo_.pWaitSemaphores = &imageAvailableSemaphore_;
+  submitInfo_.pSignalSemaphores = &renderFinishedSemaphore_;
+  submitInfo_.pCommandBuffers = &commandBuffer_;
+  return &submitInfo_;
 }

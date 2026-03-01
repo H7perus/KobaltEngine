@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.h"
+#include "Frame.h"
 
 #include "vulkan/vulkan.hpp"
 #include "VkBootstrap.h"
@@ -9,79 +10,52 @@
 
 #include "RendererDLL.h"
 
+#include "BasicTypeAliases.h"
+
 namespace KE::VK
 {
-    GPUI_DLL_API class Swapchain
+    class GPUI_DLL_API Swapchain
     {
-        public:
+      public:
         vk::SwapchainKHR swapchain_;
-        vk::Format format_;
-        vk::Extent2D extent_;
-        vk::SurfaceKHR surface_;
-        vkb::Swapchain vkbSwapchain_;
-        KE::VK::Device *device_;
-
-        std::vector<vk::Image> images_;
+        vk::Format       format_;
+        vk::Extent2D     extent_;
+        vk::SurfaceKHR   surface_;
+        vkb::Swapchain   vkbSwapchain_;
+        KE::VK::Device  *device_;
+        vk::Queue        graphicsQueue_;
+        // refers to Frame In Flight!
+        u32                        currentFrame_;
+        u32                        currentImage_;
+        std::vector<Frame>         frames_;
+        std::vector<vk::Image>     images_;
         std::vector<vk::ImageView> imageViews_;
-    public:
-        void Init(KE::VK::Device &device, vk::SurfaceKHR surface, uint32_t width, uint32_t height)
+
+      public:
+        void Init(KE::VK::Device &device, vk::SurfaceKHR surface, uint32_t width, uint32_t height);
+
+        Frame &BeginNextFrame();
+
+        vk::Image GetCurrentImage()
         {
-            device_ = &device;
-            surface_ = surface;
-            BuildSwapchain(width, height);
+            return images_[currentImage_];
+        }
+        vk::ImageView GetCurrentImageView()
+        {
+            return imageViews_[currentImage_];
         }
 
-        void BuildSwapchain(uint32_t width, uint32_t height)
+        vk::CommandBuffer GetCurrentCommandBuffer()
         {
-            vkb::SwapchainBuilder builder{vkb::Device(*device_)};
-
-            auto result = builder
-                              .set_desired_extent(width, height)
-                              .set_desired_format({VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
-                              .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-                              .set_old_swapchain(vkbSwapchain_)
-                              .build();
-
-            if (!result)
-            {
-                // handle error
-                printf("Swapchain build failed: %s\n", result.error().message().c_str());
-                return;
-            }
-
-            vkbSwapchain_ = result.value();
-
-            swapchain_ = (vk::SwapchainKHR)(vkbSwapchain_.swapchain);
-            format_ = vk::Format(vkbSwapchain_.image_format);
-            extent_ = vk::Extent2D{vkbSwapchain_.extent.width, vkbSwapchain_.extent.height};
-
-            // grab images
-            auto images = vkbSwapchain_.get_images().value();
-            images_.assign(images.begin(), images.end());
-
-            // grab image views
-            auto imageViews = vkbSwapchain_.get_image_views().value();
-            imageViews_.assign(imageViews.begin(), imageViews.end());
+            return frames_[currentFrame_].commandBuffer_;
         }
 
-        void Recreate(uint32_t width, uint32_t height)
-        {
-            // destroy old image views before rebuilding
-            Destroy();
-            BuildSwapchain(width, height);
-        }
+        void EndFrame();
 
-        void Destroy()
-        {
-            vk::Device device = (vk::Device)(*device_);
+        void BuildSwapchain(u32 width, u32 height);
 
-            for (auto &iv : imageViews_)
-                device.destroyImageView(iv);
+        void Recreate(u32 width, u32 height);
 
-            imageViews_.clear();
-            images_.clear();
-
-            device.destroySwapchainKHR(swapchain_);
-        }
+        void Destroy();
     };
 }

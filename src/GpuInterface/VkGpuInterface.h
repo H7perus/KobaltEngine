@@ -24,7 +24,7 @@ namespace KE
 	public:
 		virtual ~VkGpuInterface() = default;
 
-		virtual void Init();
+		virtual void Init() override;
 
 		//Dangerzone! SDL does some macro fuckery around the flags. u64 might not work as a type in the future.
 		virtual u64 GetSDLWindowFlag() override;
@@ -36,7 +36,7 @@ namespace KE
 
 		//KE::VK::Device device_ = KE::VK::Device();
 		KE::VK::DeviceManager deviceManager_ = KE::VK::DeviceManager();
-
+		SDL_Window* window_ = nullptr;
 		vk::Queue graphics_queue_;
 		vk::Queue compute_queue_;
 

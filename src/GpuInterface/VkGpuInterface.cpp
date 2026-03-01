@@ -1,5 +1,7 @@
 #pragma once
 #include "VkGpuInterface.h"
+#include "SDL3/SDL_vulkan.h"
+#include "Types/Swapchain.h"
 #include "VkHelpers.h"
 
 #include "glm/glm.hpp"
@@ -21,12 +23,8 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 #include <string>
 
 
-f32 vertexInfo[] = 
-{
-	 0.0, -1.0, -0.5, 1.0, 0.0, 0.0,  0.5, 0.0,
-	 -1.0,  1.0, -0.5, 0.0, 1.0, 0.0, -1.0, 1.0,
-	 1.0,  1.0, -0.5, 0.0, 1.0, 0.0,  1.0, 1.0
-};
+f32 vertexInfo[] = {0.0, -1.0, 0.5,  1.0, 0.0, 0.0, 0.5, 0.0, -1.0, 1.0, 0.5, 0.0,
+                    1.0, 0.0,  -1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0,  1.0, 1.0, 1.0};
 
 int vertexIndices[] = { 0, 1, 2 };
 
@@ -34,11 +32,16 @@ int vertexIndices[] = { 0, 1, 2 };
 void KE::VkGpuInterface::Init()
 {
 	vkboot_inst_ = createInstance();
-
 	vk_inst_ = vkboot_inst_.instance;
 
-	deviceManager_ = KE::VK::DeviceManager(createDevice(vkboot_inst_));
+	//VkSurfaceKHR surface_;
+	bool test = SDL_Vulkan_CreateSurface(window_, vk_inst_, nullptr, (VkSurfaceKHR*)&(swapchain_.surface_));
 
+	
+
+	deviceManager_ = KE::VK::DeviceManager(createDevice(vkboot_inst_, swapchain_.surface_));
+
+	swapchain_.Init(deviceManager_.GetDevice(), swapchain_.surface_, 800, 600);
 
 	graphics_queue_ = deviceManager_.GetGraphicsQueue();
 	compute_queue_ = deviceManager_.GetComputeQueue();
@@ -70,10 +73,15 @@ void KE::VkGpuInterface::Init()
 	KE::VK::PipelineCompute pipeline(deviceManager_.device_, slangShader);
 
 	testPipeline = KE::VK::PipelineGraphics(deviceManager_.device_, slangGraphicsShader);
+
 	vertexBuffer = KE::VK::Buffer(deviceManager_.device_, sizeof(vertexInfo), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 	f32* mappedVertBuffer = (float*)vertexBuffer.map();
-	memcpy(vertexInfo, mappedVertBuffer, sizeof(vertexInfo));
+	memcpy(mappedVertBuffer, vertexInfo, sizeof(vertexInfo));
+
+	for (int i = 0; i < 10; i++)
+		std::cout << "TEST VALUE: " << std::dec << mappedVertBuffer[i] << std::endl;
+
 	vertexBuffer.unmap();
 	vk::DescriptorPool descPool = createDescriptorPool(deviceManager_.device_);
 
@@ -91,7 +99,7 @@ void KE::VkGpuInterface::Init()
 	vk::DeviceSize reservedRange = heapProps.minResourceHeapReservedRange;
 
 
-	KE::VK::DescriptorHeapBuffer descriptorHeap(deviceManager_.device_, 64, KE::VK::DescriptorHeapType::ResourceHeap);
+	KE::VK::DescriptorHeapBuffer descriptorHeap(deviceManager_.device_, 2048, KE::VK::DescriptorHeapType::ResourceHeap);
 	
 	vk::ResourceDescriptorInfoEXT resInfo;
 	resInfo.type = vk::DescriptorType::eStorageBuffer;

@@ -14,6 +14,11 @@ namespace KE::VK
 
 	public:
 		virtual void Recreate(SlangCompiledUnit shader) {};
+
+		vk::Pipeline GetPipeline() const
+		{
+			return pipeline_;
+		}
 	};
 }
 

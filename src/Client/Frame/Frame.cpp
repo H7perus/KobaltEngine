@@ -11,4 +11,7 @@ void KE::Frame::RunClientFrame()
 	//Simulate, noclip
 	std::cout << f32(KE::GlobalClock::QueryGlobalTime()) << std::endl;
 	//Draw,
+
+
+
 }

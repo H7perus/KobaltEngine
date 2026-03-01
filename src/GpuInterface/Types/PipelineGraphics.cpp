@@ -22,14 +22,16 @@ PipelineGraphics::PipelineGraphics(const vk::Device &device, SlangCompiledUnit s
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = {vertexStageInfo, fragmentStageInfo};
 
-    vk::Format format = vk::Format::eR8G8B8Unorm;
+    vk::Format format = vk::Format::eR8G8B8A8Unorm;
+    
+    vk::PipelineCreateFlags2CreateInfo flags2Info;
+    flags2Info.flags = vk::PipelineCreateFlagBits2::eDescriptorHeapEXT;
 
     vk::PipelineRenderingCreateInfo renderingCreateInfo;
+    renderingCreateInfo.pNext = &flags2Info;
     renderingCreateInfo.colorAttachmentCount = 1;
     renderingCreateInfo.pColorAttachmentFormats = &format;
-    vk::PipelineCreateFlags2CreateInfo flags2Info;
-    flags2Info.pNext = &renderingCreateInfo;
-    flags2Info.flags = vk::PipelineCreateFlagBits2::eDescriptorHeapEXT;
+    
 
     vk::VertexInputBindingDescription bindings[] = {
         vk::VertexInputBindingDescription(0, 32, vk::VertexInputRate::eVertex)};
@@ -52,7 +54,7 @@ PipelineGraphics::PipelineGraphics(const vk::Device &device, SlangCompiledUnit s
     vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo;
     pipelineRasterizationStateCreateInfo.polygonMode = vk::PolygonMode::eFill;
     pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
-    pipelineRasterizationStateCreateInfo.cullMode = vk::CullModeFlagBits::eBack;
+    pipelineRasterizationStateCreateInfo.cullMode = vk::CullModeFlagBits::eNone;
 
     vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;
     pipelineViewportStateCreateInfo.scissorCount = 1;
@@ -66,8 +68,18 @@ PipelineGraphics::PipelineGraphics(const vk::Device &device, SlangCompiledUnit s
     pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
     pipelineDynamicStateCreateInfo.dynamicStateCount = dynamicStates.size();
 
+    vk::PipelineColorBlendAttachmentState blendAttachment{};
+    blendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+                                     vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+    blendAttachment.blendEnable    = VK_FALSE;
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.logicOpEnable   = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments    = &blendAttachment;
+
     vk::GraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.pNext = &flags2Info;
+    pipelineInfo.pNext = &renderingCreateInfo;
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages.data();
     pipelineInfo.layout = VK_NULL_HANDLE;
@@ -77,6 +89,9 @@ PipelineGraphics::PipelineGraphics(const vk::Device &device, SlangCompiledUnit s
     pipelineInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
     pipelineInfo.pViewportState = &pipelineViewportStateCreateInfo;
     pipelineInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+    pipelineInfo.pColorBlendState = &colorBlending;
 
     auto result = device.createGraphicsPipeline(nullptr, pipelineInfo);
+
+    pipeline_ = result.value;
 }

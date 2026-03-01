@@ -4,7 +4,7 @@
 #include "Buffer.h"
 #include "BasicTypeAliases.h"
 
-
+#include "RendererDLL.h"
 
 namespace KE::VK
 {
@@ -16,7 +16,7 @@ namespace KE::VK
 
 
 
-	class DescriptorHeapBuffer : public Buffer
+	class GPUI_DLL_API DescriptorHeapBuffer : public Buffer
 	{
 		//lowest index: heap reserved range divided by descriptor size
 		i32 lowestIndex_ = 0;
@@ -34,72 +34,17 @@ namespace KE::VK
 		vk::BindHeapInfoEXT bindInfo_;
 
 	public:
-		DescriptorHeapBuffer( const KE::VK::Device&device_in, i32 descriptorCount, DescriptorHeapType heapType)
-			: Buffer(device_in, calculateSize(device_in, descriptorCount, heapType), vk::BufferUsageFlagBits::eDescriptorHeapEXT
-				| vk::BufferUsageFlagBits::eShaderDeviceAddress, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)
-		{
-
-			if (heapType == ResourceHeap)
-			{
-				descriptorSize_ = device_in.GetResourceDescriptorSize();
-				lowestIndex_ = device_in.GetResourceHeapReservedRange() / device_in.GetResourceDescriptorSize();
-			}
-			else if (heapType == SamplerHeap)
-			{
-				descriptorSize_ = device_in.GetSamplerDescriptorSize();
-				lowestIndex_ = device_in.GetSamplerHeapReservedRange() / device_in.GetSamplerDescriptorSize();
-			}
-			else
-			{
-				throw new std::exception("There are only two types of descriptor heaps and you doofus somehow managed to fuck it up");
-			}
-
-			previouslyUsedIndexCount_ = lowestIndex_;
-			maxDescriptorCount_ = descriptorCount;
-
-			bindInfo_.heapRange.address = ((vk::Device)(*device_)).getBufferAddress(buffer);
-			bindInfo_.heapRange.size = bufferCreateInfo.size;
-			bindInfo_.reservedRangeOffset = 0;
-			bindInfo_.reservedRangeSize = lowestIndex_ * descriptorSize_;
+		DescriptorHeapBuffer(){};
+		DescriptorHeapBuffer( const KE::VK::Device&device_in, i32 descriptorCount, DescriptorHeapType heapType);
 
 
-		}
+		i32 EnterDescriptor(vk::ResourceDescriptorInfoEXT* descriptor);
 
-		i32 EnterDescriptor(vk::ResourceDescriptorInfoEXT* descriptor)
-		{
-			i32 index = 0;
-			if (freedIndices_.size() == 0)
-				index = previouslyUsedIndexCount_;
-			else
-			{
-				index = freedIndices_[freedIndices_.size() - 1];
-				freedIndices_.pop_back();
-			}
 
-			vk::HostAddressRangeEXT dest;
-			dest.address = (char*)map() + index * descriptorSize_;
-			dest.size = descriptorSize_;
-
-			((vk::Device)(*device_)).writeResourceDescriptorsEXT(1, descriptor, &dest);
-			
-			unmap();
-			return index;
-		}
-
-		vk::BindHeapInfoEXT* GetBindInfo()
-		{
-			return &bindInfo_;
-		}
+		vk::BindHeapInfoEXT* GetBindInfo();
 
 	private:
-		static i64 calculateSize(const KE::VK::Device& device_in, i64 count, DescriptorHeapType type)
-		{
-			if (type == ResourceHeap)
-				return device_in.GetResourceHeapReservedRange() + count * device_in.GetResourceDescriptorSize();
-			if (type == SamplerHeap)
-				return device_in.GetSamplerHeapReservedRange() + count * device_in.GetSamplerDescriptorSize();
-		}
-		//static v
+		static i64 calculateSize(const KE::VK::Device& device_in, i64 count, DescriptorHeapType type);
 	};
 }
 

@@ -4,12 +4,13 @@ set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(KobaltEngine)
 
-set(CMAKE_FIND_DEBUG_MODE TRUE)
+#set(CMAKE_FIND_DEBUG_MODE TRUE)
 
 set(Vulkan_DIR "" CACHE PATH "" FORCE)
 set(Vulkan_ROOT "" CACHE PATH "" FORCE)

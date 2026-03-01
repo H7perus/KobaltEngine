@@ -57,14 +57,15 @@ inline void createSurface(vk::SurfaceKHR& surface, SDL_Window* window, vk::Insta
 
 
 //TODO: We need to be able to pass requirements for the device.
-inline vkb::Device createDevice(vkb::Instance vkb_inst)
+inline vkb::Device createDevice(vkb::Instance vkb_inst, vk::SurfaceKHR surface)
 {
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
 	auto phys_ret = selector//.set_surface(NULL)
 		.add_required_extension("VK_EXT_descriptor_heap")
 		.add_required_extension("VK_KHR_shader_untyped_pointers")
 		.set_minimum_version(1, 4)
-		.require_present(false)
+		.require_present(true)
+		.set_surface(surface)
 		.select();
 	if (!phys_ret) {
 		std::cerr << "Error code: " << phys_ret.vk_result() << std::endl;
@@ -72,6 +73,7 @@ inline vkb::Device createDevice(vkb::Instance vkb_inst)
 	}
 
 	vk::PhysicalDeviceVulkan13Features features13;
+	features13.synchronization2 = VK_TRUE;
 	features13.dynamicRendering = VK_TRUE;
 
 	vk::PhysicalDeviceDescriptorHeapFeaturesEXT descHeapFeatures;
