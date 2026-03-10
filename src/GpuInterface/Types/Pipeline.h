@@ -11,7 +11,7 @@ namespace KE::VK
 	{
 	protected:
 		vk::Pipeline pipeline_;
-
+		u32 deviceIndex_ = 0;
 	public:
 		virtual void Recreate(SlangCompiledUnit shader) {};
 

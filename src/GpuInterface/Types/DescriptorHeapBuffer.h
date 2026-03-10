@@ -1,6 +1,5 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
-#include "Device.h"
 #include "Buffer.h"
 #include "BasicTypeAliases.h"
 
@@ -22,29 +21,27 @@ namespace KE::VK
 		i32 lowestIndex_ = 0;
 		//the limit. We can only have that many resources referenced by this heap
 		i32 maxDescriptorCount_ = 0;
-
 		i32 descriptorSize_ = 0;
-
 		//counts up when a new slot in the heap is used. If an old one is reused, it stays the same.
 		//value includes the reserved range
 		i32 previouslyUsedIndexCount_ = 0;
 		//We want to reuse free descriptor slots. Slot is freed = goes into the list, is reused and the element popped.
 		std::vector<i32> freedIndices_;
-
 		vk::BindHeapInfoEXT bindInfo_;
+		DescriptorHeapType heapType_;
 
 	public:
 		DescriptorHeapBuffer(){};
-		DescriptorHeapBuffer( const KE::VK::Device&device_in, i32 descriptorCount, DescriptorHeapType heapType);
+		DescriptorHeapBuffer( const u32 deviceIndex, i32 descriptorCount, DescriptorHeapType heapType);
 
+		i32 EnterResourceDescriptor(vk::ResourceDescriptorInfoEXT* descriptor);
 
-		i32 EnterDescriptor(vk::ResourceDescriptorInfoEXT* descriptor);
+		i32 EnterSamplerDescriptor(vk::SamplerCreateInfo* sampler);
 
+        vk::BindHeapInfoEXT* GetBindInfo();
 
-		vk::BindHeapInfoEXT* GetBindInfo();
-
-	private:
-		static i64 calculateSize(const KE::VK::Device& device_in, i64 count, DescriptorHeapType type);
+      private:
+		static i64 calculateSize(const u32 deviceIndex, i64 count, DescriptorHeapType type);
 	};
 }
 

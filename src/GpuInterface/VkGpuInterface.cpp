@@ -4,12 +4,20 @@
 #include "Types/Swapchain.h"
 #include "VkHelpers.h"
 
-#include "glm/glm.hpp"
-
 #include "Types/Buffer.h"
 #include "Types/DescriptorHeapBuffer.h"
-#include "Types/PipelineGraphics.h"
+#include "Types/DeviceManager.h"
 #include "Types/PipelineCompute.h"
+#include "Types/PipelineGraphics.h"
+#include "Types/Sampler.h"
+#include "Types/Texture.h"
+#include "glm/glm.hpp"
+
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_include.h"
+
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
@@ -23,137 +31,157 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 #include <string>
 
 
-f32 vertexInfo[] = {0.0, -1.0, 0.5,  1.0, 0.0, 0.0, 0.5, 0.0, -1.0, 1.0, 0.5, 0.0,
-                    1.0, 0.0,  -1.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0,  1.0, 1.0, 1.0};
+f32 vertexInfo[] = {0.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.5, 0.0, -1.0, 1.0, 0.5, 0.0,
+                    1.0, 0.0,  0.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0,  1.0, 1.0, 1.0};
 
-int vertexIndices[] = { 0, 1, 2 };
+int vertexIndices[] = {0, 1, 2};
 
 
 void KE::VkGpuInterface::Init()
 {
-	vkboot_inst_ = createInstance();
-	vk_inst_ = vkboot_inst_.instance;
+    vkboot_inst_ = createInstance();
+    vk_inst_     = vkboot_inst_.instance;
+    VK::ContextManager::Init();
+    vk::SurfaceKHR surface;
+    bool           test = SDL_Vulkan_CreateSurface(window_, vk_inst_, nullptr, (VkSurfaceKHR*)&surface);
 
-	//VkSurfaceKHR surface_;
-	bool test = SDL_Vulkan_CreateSurface(window_, vk_inst_, nullptr, (VkSurfaceKHR*)&(swapchain_.surface_));
+    VK::ContextManager::GetInstance().AddDevice(createDevice(vkboot_inst_, surface));
 
-	
-
-	deviceManager_ = KE::VK::DeviceManager(createDevice(vkboot_inst_, swapchain_.surface_));
-
-	swapchain_.Init(deviceManager_.GetDevice(), swapchain_.surface_, 800, 600);
-
-	graphics_queue_ = deviceManager_.GetGraphicsQueue();
-	compute_queue_ = deviceManager_.GetComputeQueue();
-
-	computeCmdPool = deviceManager_.CreateComputeCommandPool();
-
-	VK::Buffer buff = VK::Buffer(deviceManager_.device_, 1024, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-	
-	std::shared_ptr<VK::BufferSet> bufferset = deviceManager_.RequestNamedBufferSet("TestBuffer", 1024, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    VK::Device& device = VK::ContextManager::GetInstance().GetDevice(0);
 
 
-	KE::VK::SlangCompileContext compileContext;
+    VK::ContextManager::AddSwapchain(0, surface, 800, 600, 2);
 
-	SlangCompiledUnit slangShader = compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/slangcompute.slang");
+    // swapchain_.Init(0, surface, 800, 600);
 
-	SlangCompiledUnit slangGraphicsShader = compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/combinedVertFrag.slang");
+    graphics_queue_ = device.GetGraphicsQueue();
+    compute_queue_  = device.GetComputeQueue();
 
-
-	Slang::ComPtr<slang::IBlob> blob = slangShader.getTargetCode();
-
-	auto glslComputeSpv = CompileGlslShader("../../../../../../Engine/src/GpuInterface/shaders/glslcompute.comp", shaderc_compute_shader);
-	std::ofstream file("spvDescriptorHeapTEST2.spv", std::ios::binary);
-	file.write((char*)blob.get()->getBufferPointer(), blob.get()->getBufferSize());
-	file.close();
-	
+    computeCmdPool = device.CreateComputeCommandPool();
 
 
-	KE::VK::PipelineCompute pipeline(deviceManager_.device_, slangShader);
+    KE::VK::SlangCompileContext compileContext;
 
-	testPipeline = KE::VK::PipelineGraphics(deviceManager_.device_, slangGraphicsShader);
+    SlangCompiledUnit slangShader =
+        compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/slangcompute.slang");
 
-	vertexBuffer = KE::VK::Buffer(deviceManager_.device_, sizeof(vertexInfo), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-	f32* mappedVertBuffer = (float*)vertexBuffer.map();
-	memcpy(mappedVertBuffer, vertexInfo, sizeof(vertexInfo));
-
-	for (int i = 0; i < 10; i++)
-		std::cout << "TEST VALUE: " << std::dec << mappedVertBuffer[i] << std::endl;
-
-	vertexBuffer.unmap();
-	vk::DescriptorPool descPool = createDescriptorPool(deviceManager_.device_);
-
-	std::shared_ptr<VK::BufferSet> bufferAttach = deviceManager_.GetBufferSetByName("TestBuffer");
-	
-
-	vk::PhysicalDeviceDescriptorHeapPropertiesEXT heapProps;
-	vk::PhysicalDeviceProperties2 props2;
-	props2.pNext = &heapProps;
-	((vk::PhysicalDevice)deviceManager_.device_).getProperties2(&props2);
-
-	
-
-	vk::DeviceSize bufDescSize = heapProps.bufferDescriptorSize;
-	vk::DeviceSize reservedRange = heapProps.minResourceHeapReservedRange;
+    SlangCompiledUnit slangGraphicsShader =
+        compileContext.CompileShaderPath("../../../../../../Engine/src/GpuInterface/shaders/combinedVertFrag.slang");
 
 
-	KE::VK::DescriptorHeapBuffer descriptorHeap(deviceManager_.device_, 2048, KE::VK::DescriptorHeapType::ResourceHeap);
-	
-	vk::ResourceDescriptorInfoEXT resInfo;
-	resInfo.type = vk::DescriptorType::eStorageBuffer;
-	resInfo.data.pAddressRange = buff.GetBufferAddressRangePtr();
+    Slang::ComPtr<slang::IBlob> blob = slangGraphicsShader.getTargetCode();
 
-	descriptorHeap.EnterDescriptor(&resInfo);
-
-	vk::CommandBufferBeginInfo beginInfo;
-	beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+    auto glslComputeSpv =
+        CompileGlslShader("../../../../../../Engine/src/GpuInterface/shaders/glslcompute.comp", shaderc_compute_shader);
+    std::ofstream file("spvDescriptorHeapTEST2.spv", std::ios::binary);
+    file.write((char*)blob.get()->getBufferPointer(), blob.get()->getBufferSize());
+    file.close();
 
 
-	vk::CommandBufferAllocateInfo allocInfo;
-	allocInfo.commandPool = computeCmdPool;
-	allocInfo.level = vk::CommandBufferLevel::ePrimary;
-	allocInfo.commandBufferCount = 1;
+    auto vertTest =
+        CompileGlslShader("../../../../../../Engine/src/GpuInterface/shaders/glsl.vert", shaderc_vertex_shader);
+    auto fragTest =
+        CompileGlslShader("../../../../../../Engine/src/GpuInterface/shaders/glsl.frag", shaderc_fragment_shader);
 
-	vk::CommandBuffer commandBuffer = vk::Device(deviceManager_.device_).allocateCommandBuffers(allocInfo)[0];
+    KE::VK::PipelineCompute pipeline(0, slangShader);
 
-	commandBuffer.begin(beginInfo);
+    testPipeline = KE::VK::PipelineGraphics(0, slangGraphicsShader);
+    // testPipeline = KE::VK::PipelineGraphics(0, vertTest, fragTest);
 
-	glm::uvec2 pushIndex = glm::uvec2(6048, 6048);
+    vertexBuffer = KE::VK::Buffer(0, sizeof(vertexInfo), vk::BufferUsageFlagBits::eVertexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-	vk::PushDataInfoEXT pushInfo{};
-	pushInfo.offset = 0;
-	pushInfo.data.address = &pushIndex;
-	pushInfo.data.size = sizeof(pushIndex);
+    f32* mappedVertBuffer = (float*)vertexBuffer.map();
+    memcpy(mappedVertBuffer, vertexInfo, sizeof(vertexInfo));
+
+    for (int i = 0; i < 10; i++)
+        std::cout << "TEST VALUE: " << std::dec << mappedVertBuffer[i] << std::endl;
+
+    vertexBuffer.unmap();
 
 
-	commandBuffer.pushDataEXT(&pushInfo);
+    
 
-	commandBuffer.bindResourceHeapEXT(descriptorHeap.GetBindInfo());
+    testSampler = VK::Sampler(0, true);
 
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
+    u8* textureData = new u8[1024 * 1024 * 4];
 
-	commandBuffer.dispatch(4, 1, 1);
+    int            w;
+    int            h;
+    int            comp;
+    unsigned char* image = stbi_load("E:/Textures/cat pics/cat_cigarette.jpg", &w, &h, &comp, STBI_rgb_alpha);
 
-	// End recording
-	commandBuffer.end();
+    testTexture = KE::VK::Texture(0, w, h, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled,
+                                  vk::MemoryPropertyFlagBits::eDeviceLocal, true);
 
-	// Submit to compute queue
-	vk::SubmitInfo submitInfo;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
+    if (!image)
+    {
+    }
 
-	compute_queue_.submit(1, &submitInfo, nullptr);  // no fence for now
-	compute_queue_.waitIdle();  // wait for completion (blocking)
-	
-	u32* numberPointer = (u32*)(buff.map());
-	
+    std::string error = stbi_failure_reason();
 
-	for (int i = 0; i < 1024 / 4; i++)
-		std::cout << numberPointer[i] << std::endl;
+    for (int x = 0; x < 1024; x++)
+        for (int y = 0; y < 1024; y++)
+            for (int c = 0; c < 4; c++)
+            {
+                textureData[(x + y * 1024) * 4 + c] = (((x / 128) + (y / 128)) % 2 * 255) * (c != 1);
+            }
 
+    testTexture.UploadPixels(image);
+
+    testBuff = VK::Buffer(0, 1024, vk::BufferUsageFlagBits::eStorageBuffer,
+                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, true);
+
+    vk::CommandBufferBeginInfo beginInfo;
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+
+    vk::CommandBufferAllocateInfo allocInfo;
+    allocInfo.commandPool        = computeCmdPool;
+    allocInfo.level              = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount = 1;
+
+    vk::CommandBuffer commandBuffer = vk::Device(device).allocateCommandBuffers(allocInfo)[0];
+
+    commandBuffer.begin(beginInfo);
+
+    glm::uvec2 pushIndex = glm::uvec2(6048, 6048);
+
+    vk::PushDataInfoEXT pushInfo{};
+    pushInfo.offset       = 0;
+    pushInfo.data.address = &pushIndex;
+    pushInfo.data.size    = sizeof(pushIndex);
+
+
+    commandBuffer.pushDataEXT(&pushInfo);
+
+    commandBuffer.bindResourceHeapEXT(device.GetResourceHeapBindInfoPtr());
+
+
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
+
+    commandBuffer.dispatch(4, 1, 1);
+
+    // End recording
+    commandBuffer.end();
+
+    // Submit to compute queue
+    vk::SubmitInfo submitInfo;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &commandBuffer;
+
+    compute_queue_.submit(1, &submitInfo, nullptr); // no fence for now
+    compute_queue_.waitIdle();                      // wait for completion (blocking)
+
+    u32* numberPointer = (u32*)(testBuff.map());
+
+
+    for (int i = 0; i < 1024 / 4; i++)
+        std::cout << numberPointer[i] << std::endl;
 }
 
 
-u64 KE::VkGpuInterface::GetSDLWindowFlag() { return SDL_WINDOW_VULKAN; }
+u64 KE::VkGpuInterface::GetSDLWindowFlag()
+{
+    return SDL_WINDOW_VULKAN;
+}

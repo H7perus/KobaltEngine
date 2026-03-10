@@ -5,11 +5,12 @@
 
 namespace KE::VK
 {
-	GPUI_DLL_API class PipelineGraphics : public Pipeline
+	class GPUI_DLL_API PipelineGraphics : public Pipeline
 	{
 	public:
 		PipelineGraphics() {};
-		PipelineGraphics(const vk::Device& device, SlangCompiledUnit shader);
+		PipelineGraphics(u32 deviceIndex, SlangCompiledUnit shader);
+		PipelineGraphics(u32 deviceIndex, std::vector<uint32_t> vertSpirv, std::vector<uint32_t> fragSpirv);
 	};
 }
 

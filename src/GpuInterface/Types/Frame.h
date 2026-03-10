@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "Resource.h"
 #include "Device.h"
 
 #include "vulkan/vulkan.hpp"
@@ -7,9 +8,10 @@
 namespace KE::VK
 {
     //This class represents the Vulkan objects that belong to one frame-in-flight. The number is equal to the swapchain images
-    class Frame
+    class InflightFrame : public IResource
     {
         friend class Swapchain;
+        KE_REFLECT(InflightFrame)
     public:
       void Init(KE::VK::Device &device);
       void Destroy(KE::VK::Device &device);
@@ -29,5 +31,7 @@ namespace KE::VK
         vk::Fence inFlightFence_;
         //Saving the submit info for the frame, so we don't have to create it every time
         vk::SubmitInfo submitInfo_;
+        //Having this all together means we can just pass the Frame as a resource.
+        vk::ImageLayout currentLayout_;
     };
 }

@@ -25,12 +25,12 @@ struct PushConstants {
 [[vk::push_constant]]
 PushConstants pc;
 
-uniform StructuredBuffer<DescriptorHandle<Sampler2D>> textures;
 // fragment shader
 //[require(spvDescriptorHeapEXT)]
 [shader("fragment")]
 float4 fragMain(VSOutput input) : SV_Target {
-    // DescriptorHandle<Sampler2D> texture = reinterpret<DescriptorHandle<Sampler2D>, uint2>(uint2(6048 * 16, 0));
-    return float4(input.color, 1.0);
 
+    DescriptorHandle<Sampler2D> texture = DescriptorHandle<Sampler2D>(uint2(3024, 16));
+
+    return texture.Sample(input.uv);
 }

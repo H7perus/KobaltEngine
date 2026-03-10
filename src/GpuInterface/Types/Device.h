@@ -2,6 +2,12 @@
 
 // #include "../VkHelpers.h"
 
+#include "DescriptorHeapBuffer.h"
+#include "GpuInterface/GpuInterface.h"
+#include "RendererDLL.h"
+#include "ResourceSet.h"
+
+
 #include "VkBootstrap.h"
 #include "vulkan/vulkan.hpp"
 
@@ -31,99 +37,74 @@ struct QueueFamilyIndices
     }
 };
 
-class Device
+class GPUI_DLL_API Device
 {
     friend class DeviceManager;
     // reserved ranges and element size for sampler and resource heaps
 
   protected:
+    u32                                           deviceIndex_;
     vk::Device                                    device_;
     vk::PhysicalDevice                            physicalDevice_;
     vkb::Device                                   vkboot_device_;
     vk::PhysicalDeviceDescriptorHeapPropertiesEXT heapProperties_;
     QueueFamilyIndices                            queueFamilyIndices_;
 
+    std::map<std::string, shared_ptr<KE::VK::ResourceSet>> namedResources_;
+
+    DescriptorHeapBuffer resourceHeap_ = DescriptorHeapBuffer();
+    DescriptorHeapBuffer samplerHeap_  = DescriptorHeapBuffer();
+
   public:
-    Device() {};
+    Device();
 
-    Device(vkb::Device vkboot_device)
+    Device(vkb::Device vkboot_device, u32 deviceIndex);
+
+    void InitDescriptorHeaps();
+
+    vk::Device GetVkDevice();
+
+    vk::PhysicalDevice GetVkPhysicalDevice();
+
+
+    template <std::derived_from<IResource> T> ResourceSet CreateResource(auto&&... args)
     {
-        device_         = vk::Device(vkboot_device.device);
-        physicalDevice_ = vk::PhysicalDevice(vkboot_device.physical_device);
-        vkboot_device_  = vkboot_device;
-
-        vk::PhysicalDeviceProperties2 props2;
-        props2.pNext = &heapProperties_;
-
-        physicalDevice_.getProperties2(&props2);
-
-        queueFamilyIndices_ = FindQueueFamilies();
+        return ResourceSet::Create<T>(deviceIndex_, std::forward<decltype(args)>(args)...);
     }
 
-    vk::Device GetVkDevice()
-    {
-        return device_;
-    }
-
-	
-    u32 FindMemoryType(u32 typeFilter, vk::MemoryPropertyFlags properties) const
-    {
-
-        vk::PhysicalDevice                 physicalDevice = vk::PhysicalDevice(physicalDevice_);
-        vk::PhysicalDeviceMemoryProperties memProperties;
-
-        physicalDevice.getMemoryProperties(&memProperties);
-
-        for (u32 i = 0; i < memProperties.memoryTypeCount; i++)
-        {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("failed to find suitable memory type!");
-    }
+    u32 FindMemoryType(u32 typeFilter, vk::MemoryPropertyFlags properties) const;
 
 
-    vk::Queue GetGraphicsQueue() const
-    {
-        auto graphics_queue_ret = device_.getQueue(queueFamilyIndices_.graphicsFamily.value(), 0);
-        if (!graphics_queue_ret)
-        { /* report */
-        }
-        return graphics_queue_ret;
-    }
+    vk::Queue GetGraphicsQueue() const;
+
+    vk::Queue GetComputeQueue() const;
 
 
-    vk::CommandPool CreateGraphicsCommandPool()
-    {
-        vk::CommandPoolCreateInfo poolInfo{};
-        poolInfo.flags            = vk::CommandPoolCreateFlags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-        poolInfo.queueFamilyIndex = queueFamilyIndices_.graphicsFamily.value();
+    vk::CommandPool CreateGraphicsCommandPool();
 
-        vk::CommandPool pool;
+    vk::CommandPool CreateComputeCommandPool();
 
-        try
-        {
-            pool = device_.createCommandPool(poolInfo, nullptr);
-        }
-        catch (const vk::SystemError &err)
-        {
-            std::cerr << "Failed to create command pool: " << err.what() << std::endl;
-        }
-
-        return pool;
-    }
 
     i64 GetResourceHeapReservedRange() const
     {
         return heapProperties_.minResourceHeapReservedRange;
     }
 
-    i64 GetResourceDescriptorSize() const
+    i64 GetResourceDescriptorStride() const
     {
-        return heapProperties_.bufferDescriptorSize;
+        return (heapProperties_.bufferDescriptorAlignment > heapProperties_.imageDescriptorAlignment) ? heapProperties_.bufferDescriptorAlignment : heapProperties_.imageDescriptorAlignment;
+    }
+
+    i64 GetBufferDescriptorSize() const
+    {
+        i64 size = heapProperties_.bufferDescriptorSize;
+
+        return size;
+    }
+
+    i64 GetImageDescriptorSize()
+    {
+        return heapProperties_.imageDescriptorSize;
     }
 
     i64 GetSamplerHeapReservedRange() const
@@ -136,6 +117,22 @@ class Device
         return heapProperties_.samplerDescriptorSize;
     }
 
+    vk::BindHeapInfoEXT* GetResourceHeapBindInfoPtr()
+    {
+        return resourceHeap_.GetBindInfo();
+    }
+
+    vk::BindHeapInfoEXT* GetSamplerHeapBindInfoPtr()
+    {
+        return samplerHeap_.GetBindInfo();
+    }
+
+    i32 EnterResourceDescriptor(vk::ResourceDescriptorInfoEXT* descriptor);
+
+    i32 EnterSamplerDescriptor(vk::SamplerCreateInfo* descriptor);
+
+
+    Device(Device&&) noexcept = default;
 
     operator vk::Device() const
     {
@@ -163,39 +160,7 @@ class Device
     }
 
   private:
-    QueueFamilyIndices FindQueueFamilies()
-    {
-        QueueFamilyIndices indices;
-
-        uint32_t queueFamilyCount = 0;
-        physicalDevice_.getQueueFamilyProperties(&queueFamilyCount, nullptr);
-
-        std::vector<vk::QueueFamilyProperties> queueFamilies(queueFamilyCount);
-        physicalDevice_.getQueueFamilyProperties(&queueFamilyCount, queueFamilies.data());
-
-        int i = 0;
-        for (const auto &queueFamily : queueFamilies)
-        {
-            // TODO: Present family must also be supported.
-
-            if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
-            {
-                indices.graphicsFamily = i;
-            }
-
-            if (queueFamily.queueFlags & vk::QueueFlagBits::eCompute)
-            {
-                indices.computeFamily = i;
-            }
-
-            if (indices.isComplete())
-            {
-                break;
-            }
-            i++;
-        }
-        return indices;
-    }
+    QueueFamilyIndices FindQueueFamilies();
 };
 
 } // namespace KE::VK

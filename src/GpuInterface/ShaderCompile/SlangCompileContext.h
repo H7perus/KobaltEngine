@@ -65,7 +65,7 @@ namespace KE::VK
 
 			sessionDesc.defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR;
 
-			std::array<slang::CompilerOptionEntry, 2> options =
+			std::array<slang::CompilerOptionEntry, 3> options =
 			{ {
 				{
 					slang::CompilerOptionName::EmitSpirvDirectly,
@@ -74,6 +74,12 @@ namespace KE::VK
 				{
 					slang::CompilerOptionName::Capability,
 					{slang::CompilerOptionValueKind::String, 1, 0, "spvDescriptorHeapEXT", nullptr}
+
+				},
+				{ //Hardcoded for now. This might not play nicely with AMD GPUs, which is a bit annoying. If it becomes a serious issue we might have to make it a spirv specilisation constant.
+					slang::CompilerOptionName::SPIRVResourceHeapStride,
+					{slang::CompilerOptionValueKind::Int, 32, 0, nullptr, nullptr}
+
 				}
 			} };
 

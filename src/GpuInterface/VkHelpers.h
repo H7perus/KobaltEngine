@@ -85,6 +85,7 @@ inline vkb::Device createDevice(vkb::Instance vkb_inst, vk::SurfaceKHR surface)
 	vk::PhysicalDeviceVulkan12Features features12;
 	features12.bufferDeviceAddress = VK_TRUE;
 	features12.runtimeDescriptorArray = VK_TRUE;
+	features12.shaderInt8 = VK_TRUE;
 
 	vkb::DeviceBuilder device_builder{ phys_ret.value() };
 	auto dev_ret = device_builder

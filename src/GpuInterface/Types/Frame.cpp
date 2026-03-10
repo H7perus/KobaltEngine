@@ -1,7 +1,7 @@
 
 #include "Frame.h"
 
-void KE::VK::Frame::Init(KE::VK::Device &device) 
+void KE::VK::InflightFrame::Init(KE::VK::Device &device) 
 {
     commandPool_ = device.CreateGraphicsCommandPool();
     commandBuffer_ = device.GetVkDevice().allocateCommandBuffers({commandPool_, vk::CommandBufferLevel::ePrimary, 1})[0];
@@ -15,7 +15,7 @@ void KE::VK::Frame::Init(KE::VK::Device &device)
     renderFinishedSemaphore_ = device.GetVkDevice().createSemaphore(semaphoreInfo);
 }
 
-void KE::VK::Frame::Destroy(KE::VK::Device &device) 
+void KE::VK::InflightFrame::Destroy(KE::VK::Device &device) 
 {
     device.GetVkDevice().destroySemaphore(imageAvailableSemaphore_);
     device.GetVkDevice().destroySemaphore(renderFinishedSemaphore_);
@@ -25,7 +25,7 @@ void KE::VK::Frame::Destroy(KE::VK::Device &device)
 
 
 // TODO: This could be a stored part of the frame, no?
-vk::SubmitInfo *KE::VK::Frame::GetSubmitInfoPtr() {
+vk::SubmitInfo *KE::VK::InflightFrame::GetSubmitInfoPtr() {
   submitInfo_.waitSemaphoreCount = 1;
   submitInfo_.pWaitSemaphores = &imageAvailableSemaphore_;
   submitInfo_.pSignalSemaphores = &renderFinishedSemaphore_;

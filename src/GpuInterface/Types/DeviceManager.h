@@ -1,52 +1,56 @@
-#pragma once
-#include "../VkHelpers.h"
 #include "Device.h"
-#include "BufferSet.h"
-#include "Buffer.h"
-#include "DescriptorHeapBuffer.h"
+#include "Swapchain.h"
+
 
 #include "RendererDLL.h"
 
-namespace KE { class VkGpuInterface; }
+namespace KE
+{
+class VkGpuInterface;
+}
 
 namespace KE::VK
 {
-	class GPUI_DLL_API DeviceManager
-	{
-		friend class KE::VkGpuInterface;
-	protected:
-		Device device_;
-		std::map<std::string, shared_ptr<KE::VK::BufferSet>> namedBuffers_;
+// Singleton to manage devices.
+class GPUI_DLL_API ContextManager
+{
+    friend class KE::VkGpuInterface;
+    ContextManager()                                 = default;
+    ContextManager& operator=(const ContextManager&) = delete;
+    ContextManager(ContextManager&&)                 = delete;
+    ContextManager& operator=(ContextManager&&)      = delete;
 
-		DescriptorHeapBuffer ResourceHeap_ = DescriptorHeapBuffer();
-		DescriptorHeapBuffer SamplerHeap_ = DescriptorHeapBuffer();
-	public:
+  protected:
+    vkb::Instance vkboot_inst_;
 
-		DeviceManager() = default;
+    std::vector<Device> devices_;
 
+    std::map<u32, Swapchain> swapchains_;
 
-		DeviceManager(Device device);
+  public:
+    static void Init();
 
+    static ContextManager& GetInstance();
 
-		Device& GetDevice();
+    static Device& GetDevice(u32 index);
 
+    static Swapchain& GetSwapchain(u32 index);
 
-		vk::Queue GetGraphicsQueue() const;
+    //Important note: we are currently assuming that devices will never be destroyed. This is important for indexing. A more robust solution would need a map.
+    template <typename... Args> u32 AddDevice(Args&&... args)
+    {
+        u32 index = GetInstance().devices_.size();
+        GetInstance().devices_.emplace_back(std::forward<Args>(args)..., index);
+        GetInstance().devices_[index].InitDescriptorHeaps();
+        return index;
+    }
 
+    template <typename... Args> 
+    static u32 AddSwapchain(Args&&... args)
+    {
+        GetInstance().swapchains_.emplace(GetInstance().swapchains_.size(), Swapchain(std::forward<Args>(args)...));
 
-		vk::Queue GetComputeQueue() const;
-
-
-		vk::CommandPool CreateComputeCommandPool();
-
-		
-		vk::CommandPool CreateGraphicsCommandPool();
-
-
-		shared_ptr<KE::VK::BufferSet> RequestNamedBufferSet(std::string name, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-
-
-		shared_ptr<KE::VK::BufferSet> GetBufferSetByName(std::string name);
-
-	};
-}
+        return GetInstance().swapchains_.size() - 1;
+    }
+};
+} // namespace KE::VK

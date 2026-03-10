@@ -1,11 +1,22 @@
-#pragma once
 #include "Client.h"
 #include "Frame/Frame.h"
 
 #include "Base/Time/LoopRateLimiter.h"
 
 #include "../GpuInterface/Types/Swapchain.h"
+
 #include "../GpuInterface/Functions/TransitionBarrier.h"
+
+#include "../GpuInterface/Types/DeviceManager.h"
+
+#include "../GpuInterface/Types/TaskGraph.h"
+#include "../GpuInterface/Types/TaskNodes/RenderTriangle.h"
+#include "../GpuInterface/Types/TaskNodes/SubmitAndPresent.h"
+#include "../GpuInterface/Types/TaskNodes/StageBarrier.h"   
+#include "../GpuInterface/Types/SwapchainOutput.h"
+#include "GpuInterface/Types/ResourceSet.h"
+#include "GpuInterface/VkGpuInterface.h"
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 
@@ -57,11 +68,26 @@ void Client::Render()
 
 void Client::Main()
 {
-    LoopRateLimiter fps_limiter(0.f);
+    LoopRateLimiter fps_limiter(100.f);
     bool            isRunning = true;
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init();
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(((VkGpuInterface *)GpuInterface)->vk_inst_));
+
+
+    VK::ResourceSet swapchainOutputSet = VK::ResourceSet::Create<VK::SwapchainOutput>(VK::ResourceSetUsage::FRAMEALIGNED, 3);
+
+    VK::TaskGraph taskGraph;
+
+    taskGraph.AddNamedResource("SwapchainOutput", VK::ContextManager::GetSwapchain(0).GetSwapchainOutputHandle());
+    
+    taskGraph.AddTask<VK::StageBarrier>(vk::PipelineStageFlagBits2::eTopOfPipe, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+    taskGraph.AddTask<VK::RenderTriangle>(0, (VkGpuInterface*)GpuInterface);
+    taskGraph.AddTask<VK::SubmitAndPresent>(0);
+
+
+
+    taskGraph.Compile();
 
     while (isRunning)
     {
@@ -77,56 +103,12 @@ void Client::Main()
             }
         }
 
-        ((VkGpuInterface *)GpuInterface)->swapchain_.BeginNextFrame();
+        VK::ContextManager::GetSwapchain(0).BeginNextFrame();
 
-        vk::CommandBuffer          cmd = ((VkGpuInterface *)GpuInterface)->swapchain_.GetCurrentCommandBuffer();
-        vk::CommandBufferBeginInfo beginInfo{};
-        beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-		cmd.reset();
-        cmd.begin(beginInfo);
+        vk::CommandBuffer          cmd = VK::ContextManager::GetSwapchain(0).GetCurrentCommandBuffer();
 
-        transitionBarrier(cmd, ((VkGpuInterface *)GpuInterface)->swapchain_.GetCurrentImage(), vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+        taskGraph.Execute(cmd);
 
-        vk::RenderingAttachmentInfo colorAttachment{};
-        colorAttachment.imageView   = ((VkGpuInterface *)GpuInterface)->swapchain_.GetCurrentImageView();
-        colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
-        colorAttachment.loadOp      = vk::AttachmentLoadOp::eClear;
-        colorAttachment.storeOp     = vk::AttachmentStoreOp::eStore;
-        colorAttachment.clearValue  = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f};
-
-        vk::RenderingInfo renderingInfo{};
-        renderingInfo.renderArea           = vk::Rect2D{{0, 0}, ((VkGpuInterface *)GpuInterface)->swapchain_.extent_};
-        renderingInfo.layerCount           = 1;
-        renderingInfo.colorAttachmentCount = 1;
-        renderingInfo.pColorAttachments    = &colorAttachment;
-
-
-        cmd.beginRendering(renderingInfo);
-
-        vk::Viewport viewport{};
-        viewport.x        = 0.0f;
-        viewport.y        = 0.0f;
-        viewport.width    = (float)((VkGpuInterface *)GpuInterface)->swapchain_.extent_.width;
-        viewport.height   = (float)((VkGpuInterface *)GpuInterface)->swapchain_.extent_.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        cmd.setViewport(0, viewport);
-
-        vk::Rect2D scissor{{0, 0}, ((VkGpuInterface *)GpuInterface)->swapchain_.extent_};
-        cmd.setScissor(0, scissor);
-
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                         ((VkGpuInterface *)GpuInterface)->testPipeline.GetPipeline());
-        vk::DeviceSize offset = 0;
-        cmd.bindVertexBuffers(0, 1, &((VkGpuInterface *)GpuInterface)->vertexBuffer.buffer, &offset);
-        cmd.draw(3, 1, 0, 0);
-
-
-        cmd.endRendering();
-        transitionBarrier(cmd, ((VkGpuInterface *)GpuInterface)->swapchain_.GetCurrentImage(), vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
-        cmd.end();
-        ((VkGpuInterface *)GpuInterface)->swapchain_.EndFrame();
     }
 }
 } // namespace KE

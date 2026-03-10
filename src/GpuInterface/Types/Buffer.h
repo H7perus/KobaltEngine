@@ -1,39 +1,43 @@
 #pragma once
 
-#include "Device.h"
+#include "DescriptorHandle.h"
+
 
 #include "VkBootstrap.h"
 #include "memHelper.h"
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
-
 #include "BasicTypeAliases.h"
+#include "Resource.h"
 
 
 namespace KE::VK
 {
-struct Buffer
+struct Buffer : public IResource
 {
-    vk::Buffer           buffer     = VK_NULL_HANDLE;
-    vk::DeviceMemory     memory     = VK_NULL_HANDLE;
-    bool                 isMappable = false;
+    KE_REFLECT(Buffer)
+  public:
+    vk::Buffer       buffer = VK_NULL_HANDLE;
+    vk::DeviceMemory memory = VK_NULL_HANDLE;
+    vk::DeviceAddressRangeEXT addressRange_;
     vk::BufferCreateInfo bufferCreateInfo{};
 
-  protected:
-    const KE::VK::Device     *device_ = nullptr;
-    vk::DeviceAddressRangeEXT addressRange_;
+    u32  deviceIndex_ = 0;
+    u32  resourceHeapIndex_;
+    bool isMappable = false;
+
+    
 
   public:
     ~Buffer();
 
     Buffer() = default;
-    Buffer(KE::VK::Device const &device_in, vk::DeviceSize size, vk::BufferUsageFlags usage,
-           vk::MemoryPropertyFlags properties);
+    Buffer(u32 deviceIndex, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, bool sendToHeap = false);
 
-    Buffer(Buffer &&other);
+    Buffer(Buffer&& other);
 
-    Buffer &operator=(Buffer &&other) noexcept;
+    Buffer& operator=(Buffer&& other) noexcept;
 
     vk::DescriptorBufferInfo GetDescriptorBufferInfo(u32 offset, u64 range);
 
@@ -41,38 +45,18 @@ struct Buffer
     vk::DeviceAddress GetBufferAddress();
 
   public:
-    vk::DeviceAddressRangeEXT *GetBufferAddressRangePtr()
+    vk::DeviceAddressRangeEXT* GetBufferAddressRangePtr()
     {
         return &addressRange_;
     }
 
-    void *map()
+    DescriptorHandle GetDescriptorHandle()
     {
-        if (!isMappable)
-        {
-            std::cerr << "VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT was not requested for this piece of memory";
-            std::terminate();
-        }
-        void *data;
-        data = ((vk::Device)(*device_)).mapMemory(memory, 0, bufferCreateInfo.size, vk::MemoryMapFlags(0));
+      return DescriptorHandle(resourceHeapIndex_, 0);
+    }
 
-        return data;
-    }
-    void unmap()
-    {
-        ((vk::Device)(*device_)).unmapMemory(memory);
-    }
-    void destroy()
-    {
-        if (buffer != VK_NULL_HANDLE)
-        {
-            ((vk::Device)(*device_)).destroyBuffer(buffer, nullptr);
-            if (memory == VK_NULL_HANDLE)
-                throw("literally HOW?");
-            ((vk::Device)(*device_)).freeMemory(memory, nullptr);
-
-            buffer = VK_NULL_HANDLE;
-        }
-    }
+    void* map();
+    void  unmap();
+    void  destroy();
 };
 } // namespace KE::VK

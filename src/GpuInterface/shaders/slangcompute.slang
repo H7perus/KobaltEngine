@@ -16,9 +16,9 @@ void computeMain(
     uint  groupIndex : SV_GroupIndex
 )
 {
-    uint2 index = uint2(6048 * 16, 0);
+    uint2 index = uint2(3025, 0);
 
-    DescriptorHandle<RWStructuredBuffer<int>> buffer = reinterpret<DescriptorHandle<RWStructuredBuffer<int>>, uint2>(index);
+    DescriptorHandle<RWStructuredBuffer<int>> buffer = DescriptorHandle<RWStructuredBuffer<int>>(uint2(3025, 0));
 
 
     buffer[dispatchThreadID.x] = dispatchThreadID.x;

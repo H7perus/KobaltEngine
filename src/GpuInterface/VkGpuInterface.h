@@ -7,9 +7,11 @@
 #include <vulkan/vulkan.hpp>
 #include "VkBootstrap.h"
 
-#include "Types/DeviceManager.h"
+
 #include "Types/Device.h"
 #include "Types/Buffer.h"
+#include "Types/Texture.h"
+#include "Types/Sampler.h"
 #include "Types/PipelineGraphics.h"
 #include "Types/Swapchain.h"
 
@@ -33,15 +35,17 @@ namespace KE
 	public:
 		vkb::Instance vkboot_inst_;
 		vk::Instance vk_inst_;
-
-		//KE::VK::Device device_ = KE::VK::Device();
-		KE::VK::DeviceManager deviceManager_ = KE::VK::DeviceManager();
+		
 		SDL_Window* window_ = nullptr;
 		vk::Queue graphics_queue_;
 		vk::Queue compute_queue_;
 
 		vk::CommandPool computeCmdPool;
 
+
+		VK::Texture testTexture;
+		VK::Sampler testSampler;
+		VK::Buffer testBuff;
 		VK::Buffer vertexBuffer;
 		VK::PipelineGraphics testPipeline = VK::PipelineGraphics();
 		VK::Swapchain swapchain_;

@@ -36,7 +36,11 @@ std::vector<uint32_t> CompileGlslShader(const std::string& filepath, shaderc_sha
     );
 
     if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+    {
+        std::cout << "Error compiling shader: " << result.GetErrorMessage() << std::endl;
         throw std::runtime_error("Shader compilation failed: " + result.GetErrorMessage());
+    }
+        
 
     return { result.cbegin(), result.cend() };
 }
