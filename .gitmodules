@@ -1,0 +1,3 @@
+[submodule "src/GpuInterface"]
+	path = src/GpuInterface
+	url = https://github.com/H7perus/GpuInterface.git
