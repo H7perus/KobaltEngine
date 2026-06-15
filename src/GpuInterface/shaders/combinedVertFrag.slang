@@ -32,5 +32,5 @@ float4 fragMain(VSOutput input) : SV_Target {
 
     DescriptorHandle<Sampler2D> texture = DescriptorHandle<Sampler2D>(uint2(3024, 16));
 
-    return texture.Sample(input.uv);
+    return texture.Sample(input.uv) * float4(input.color, 1);
 }

@@ -9,12 +9,12 @@
 
 int main()
 {
-	KE::EntityFactory::RegisterEntity<TestEntity>("TestEntity");
+	//KE::EntityFactory::RegisterEntity<TestEntity>("TestEntity");
 
-	std::shared_ptr<KE::Entity> testEntityPointer = KE::EntityFactory::Create("TestEntity");
+	//std::shared_ptr<KE::Entity> testEntityPointer = KE::EntityFactory::Create("TestEntity");
 
 
-	std::cout << "the name of this class is " << testEntityPointer->GetTypeName() << std::endl;
+	//std::cout << "the name of this class is " << testEntityPointer->GetTypeName() << std::endl;
 
 	KE::Client TestClient; 
 	TestClient.Initialise();

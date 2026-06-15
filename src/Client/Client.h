@@ -7,6 +7,9 @@
 #include <SDL3/SDL_vulkan.h>
 #include "vulkan/vulkan.hpp"
 
+#include "Renderer/Renderer.h"
+#include "Engine/Entity/EntityWorld.h"
+
 #include "ClientDLL.h"
 
 namespace KE
@@ -23,7 +26,12 @@ namespace KE
 
 		void Main();
 
+		EntityWorld entityWorld;
+
 		SDL_Window* window = nullptr;
+
+
+		KE::R::Renderer renderer; 
 
 		IGpuInterface* GpuInterface = new KE::VkGpuInterface();
 		vk::CommandPool commandPool;

@@ -7,7 +7,8 @@ namespace KE
 	class ISystem : public IReflectedType
 	{
 	public:
-		//virtual void Run() = 0;
+		//virtual void Initialize() = 0;
+		//virtual void Shutdown() = 0;
 
 	};
 }

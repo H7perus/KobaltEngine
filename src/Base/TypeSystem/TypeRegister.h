@@ -1,5 +1,5 @@
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 #include "BasicTypeAliases.h"
 #include "TypeInfo.h"
@@ -8,18 +8,25 @@
 
 namespace KE
 {
-	class BASE_DLL_API TypeRegister
-	{
+	//Purpose: Make sure the unordered map doesn't do extra work. We want to create entities both by string and ID, so it is beneficial to have control over the hashing.
+struct IdentityHash
+{
+    size_t operator()(uint64_t v) const noexcept
+    {
+        return v;
+    }
+};
 
-	private:
 
-		static std::unordered_map<std::string, KE::TypeInfo> types;
+class BASE_DLL_API TypeRegister
+{
 
-		static u32 incrementingID;
+  private:
+    static std::unordered_map<u64, KE::TypeInfo, KE::IdentityHash> types;
 
-	public:
+    static u32 incrementingID;
 
-		static KE::TypeInfo* RegisterType(std::string typeName);
-
-	};
-}
+  public:
+    static KE::TypeInfo* RegisterType(const char* typeName);
+};
+} // namespace KE

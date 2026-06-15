@@ -7,11 +7,14 @@
 #include "vulkan/vulkan.hpp"
 
 
+#include "GpuInterfaceDLL.h"
+
 namespace KE::VK
 {
-class Texture : public IResource
+class GPUI_DLL_API Texture : public IResource
 {
-    KE_REFLECT(Texture)
+    friend class DescriptorHandle;
+    KE_GPUREFLECT(Texture)
 
     // Texture properties and Vulkan handles would go here
     vk::Image                  image_;

@@ -3,12 +3,16 @@
 #include "Resource.h"
 
 #include "vulkan/vulkan.hpp"
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {
-class Sampler : public IResource
+class GPUI_DLL_API Sampler : public IResource
 {
-    KE_REFLECT(Sampler)
+  friend class DescriptorHandle;
+  KE_GPUREFLECT(Sampler)
+  protected:
+    
 
     vk::SamplerCreateInfo samplerInfo_;
     u32                   deviceIndex_;

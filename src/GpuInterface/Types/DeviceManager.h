@@ -2,7 +2,9 @@
 #include "Swapchain.h"
 
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
+
+#include "GpuInterfaceDLL.h"
 
 namespace KE
 {
@@ -31,6 +33,10 @@ class GPUI_DLL_API ContextManager
     static void Init();
 
     static ContextManager& GetInstance();
+
+    static void SetVkInstance(vkb::Instance inst);
+
+    static vk::Instance GetVkInstance();
 
     static Device& GetDevice(u32 index);
 

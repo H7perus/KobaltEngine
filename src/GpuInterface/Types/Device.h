@@ -4,7 +4,6 @@
 
 #include "DescriptorHeapBuffer.h"
 #include "GpuInterface/GpuInterface.h"
-#include "RendererDLL.h"
 #include "ResourceSet.h"
 
 
@@ -19,7 +18,7 @@
 // TODO: Think about where to store named buffer references etc. Its a bit of an annoyance.
 
 
-#include "BasicTypeAliases.h"
+#include "GpuInterface/BasicTypeAliases.h"
 
 using std::shared_ptr;
 

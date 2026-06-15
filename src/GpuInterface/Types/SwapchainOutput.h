@@ -3,6 +3,7 @@
 #include "Resource.h"
 
 #include "vulkan/vulkan.hpp"
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {
@@ -10,9 +11,10 @@ namespace KE::VK
 // This exists so that we can treat swapchain output as its own resource for the use in nodes, such as the present node
 // and anything that renders to it.
 
-class SwapchainOutput : public IResource
+class GPUI_DLL_API SwapchainOutput : public IResource
 {
-    KE_REFLECT(SwapchainOutput)
+    KE_GPUREFLECT(SwapchainOutput)
+    
     vk::Image       image_;
     vk::ImageView   imageView_;
     vk::Extent2D    extent_;

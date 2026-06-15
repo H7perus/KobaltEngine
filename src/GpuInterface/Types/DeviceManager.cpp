@@ -11,6 +11,16 @@ KE::VK::ContextManager &KE::VK::ContextManager::GetInstance()
     return instance;
 };
 
+void KE::VK::ContextManager::SetVkInstance(vkb::Instance inst)
+{
+    GetInstance().vkboot_inst_ = inst;
+}
+
+vk::Instance KE::VK::ContextManager::GetVkInstance()
+{
+    return GetInstance().vkboot_inst_.instance;
+}
+
 Device& ContextManager::GetDevice(u32 index)
 {
     return GetInstance().devices_.at(index);

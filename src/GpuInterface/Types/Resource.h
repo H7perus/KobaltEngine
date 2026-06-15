@@ -1,9 +1,10 @@
 #pragma once
-#include "Base/TypeSystem/ReflectedType.h"
+
+#include "GpuInterface/Types/IGpuReflectedType.h"
 
 namespace KE::VK
 {
-class IResource : public KE::IReflectedType
+class IResource : public IGpuReflectedType
 {
 };
 }

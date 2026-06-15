@@ -1,16 +1,30 @@
 #include "TypeRegister.h"
 
+#include "Util/FNV1a.h"
+#include <format>
+#include <stdexcept>
 
 u32 KE::TypeRegister::incrementingID = 0;
-std::unordered_map<std::string, KE::TypeInfo> KE::TypeRegister::types;
 
-KE::TypeInfo* KE::TypeRegister::RegisterType(std::string typeName)
+
+std::unordered_map<u64, KE::TypeInfo, KE::IdentityHash> KE::TypeRegister::types;
+
+
+KE::TypeInfo* KE::TypeRegister::RegisterType(const char* typeName)
 {
-	if (!KE::TypeRegister::types.contains(typeName))
-	{
-		KE::TypeInfo info{ KE::TypeRegister::incrementingID++, typeName };
-		KE::TypeRegister::types.insert(std::make_pair(typeName, info));
-	}
+    u64 hashedName = FNV1aTo64(typeName);
 
-	return &KE::TypeRegister::types.at(typeName);
+    if (!KE::TypeRegister::types.contains(hashedName))
+    {
+        KE::TypeInfo info{hashedName, typeName};
+        KE::TypeRegister::types.insert(std::make_pair(hashedName, info));
+    }
+    else
+    {
+        throw std::logic_error(
+            std::format("Type already exists or colliding hash! \n Existing name: {}  \n Trying to add: {} ",
+                        types.at(hashedName).typeName, typeName));
+    }
+
+    return &KE::TypeRegister::types.at(hashedName);
 }

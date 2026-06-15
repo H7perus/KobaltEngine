@@ -15,9 +15,9 @@ class TestClass : public KE::IReflectedType
 };
 
 
-class TestEntity : public KE::Entity
-{
-	KE_REFLECT(TestEntity)
-};
+// class TestEntity : public KE::Entity
+// {
+// 	KE_REFLECT(TestEntity)
+// };
 
 //KE_REGISTER_ENTITY(TestEntity)

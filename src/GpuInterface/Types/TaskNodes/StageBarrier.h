@@ -2,7 +2,9 @@
 
 #include "../TaskNode.h"
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
+
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {

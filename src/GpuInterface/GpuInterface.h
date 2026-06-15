@@ -1,9 +1,10 @@
 #pragma once
 
 
-#include "Base/System/System.h"
+//#include "Base/System/System.h"
 
-#include "RendererDLL.h"
+
+#include "GpuInterface/BasicTypeAliases.h"
 
 //------------------------------------------------------------------------------------
 // Interface for GpuInterface. said GpuInterfaces should be plug-n-play.
@@ -13,7 +14,7 @@
 
 namespace KE
 {
-	class IGpuInterface : ISystem
+	class IGpuInterface
 	{
 	public:
 

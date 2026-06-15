@@ -7,7 +7,10 @@
 #include "Pipeline.h"
 //#include "DescriptorSetLayoutInfo.h"
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
+#include "GpuInterfaceDLL.h"
+
+
 #include "vulkan/vulkan.hpp"
 
 namespace KE::VK

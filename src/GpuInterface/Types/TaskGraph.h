@@ -6,68 +6,33 @@
 #include <vector>
 
 
+#include "GpuInterfaceDLL.h"
+
 namespace KE::VK
 {
 
-class TaskGraph
+class GPUI_DLL_API TaskGraph
 {
   public:
     TaskGraph()  = default;
     ~TaskGraph() = default;
 
-    template <std::derived_from<ITaskNode> T> void AddTask(auto&&... args)
+    TaskGraph(const TaskGraph&)            = delete;
+    TaskGraph& operator=(const TaskGraph&) = delete;
+    TaskGraph(TaskGraph&&)                 = default;
+    TaskGraph& operator=(TaskGraph&&)      = default;
+
+    template <std::derived_from<ITaskNode> T> 
+    void AddTask(auto&&... args)
     {
         tasks_.emplace_back(std::make_unique<T>(std::forward<decltype(args)>(args)...));
     }
 
-    void Compile()
-    {
-        //RESOLVE DEPENDENCIES
-        for (auto& node : tasks_)
-        {
-            for (auto& entry : node->reads_)
-            {
-                if (namedResources_.contains(entry.first))
-                {
-                    entry.second = namedResources_[entry.first];
-                }
-            }
-            for (auto& entry : node->writes_)
-            {
-                if (namedResources_.contains(entry.first))
-                {
-                    entry.second = namedResources_[entry.first];
-                }
-            }
-        }
+    void Compile();
 
-        //INSERT BARRIERS
-        std::vector<std::string> resourcesWritten;
-        for (int i = 0; i < tasks_.size(); i++)
-        {
-            std::unique_ptr<ITaskNode>& node = tasks_[i];
-        }
-    }
+    void Execute(vk::CommandBuffer cmd);
 
-    void Execute(vk::CommandBuffer cmd)
-    {
-        for (auto& task : tasks_)
-        {
-            task->Execute(cmd);
-        }
-    };
-
-    void AddNamedResource(std::string name, ResourceHandle resource)
-    {
-        if (!namedResources_.contains(name))
-        {
-            namedResources_.insert({name, resource});
-        }
-        else
-        {
-            throw std::logic_error(std::format("Resource with name \"{}\" already exists!", name));
-        }
-    }
+    void AddNamedResource(std::string name, ResourceHandle resource);
 
   private:
     std::vector<std::unique_ptr<ITaskNode>> tasks_;

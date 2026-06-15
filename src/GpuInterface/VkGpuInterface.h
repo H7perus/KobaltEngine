@@ -1,6 +1,5 @@
 #pragma once
 
-#include "System/System.h"
 #include "GpuInterface/GpuInterface.h"
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
@@ -22,7 +21,7 @@ namespace KE
 	class GPUI_DLL_API VkGpuInterface : public IGpuInterface
 	{
 	
-		KE_SYSTEM(VkRenderer);
+		//KE_SYSTEM(VkRenderer);
 	public:
 		virtual ~VkGpuInterface() = default;
 

@@ -1,23 +1,20 @@
 #pragma once
 
-#include "DescriptorHandle.h"
 
-
-#include "VkBootstrap.h"
-#include "memHelper.h"
-#include <iostream>
 #include <vulkan/vulkan.hpp>
 
-#include "BasicTypeAliases.h"
+#include "GpuInterface/BasicTypeAliases.h"
 #include "Resource.h"
 
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {
-struct Buffer : public IResource
+struct GPUI_DLL_API Buffer : public IResource
 {
-    KE_REFLECT(Buffer)
-  public:
+    KE_GPUREFLECT(Buffer)
+    friend class DescriptorHandle;
+  protected:
     vk::Buffer       buffer = VK_NULL_HANDLE;
     vk::DeviceMemory memory = VK_NULL_HANDLE;
     vk::DeviceAddressRangeEXT addressRange_;
@@ -44,16 +41,13 @@ struct Buffer : public IResource
   protected:
     vk::DeviceAddress GetBufferAddress();
 
-  public:
-    vk::DeviceAddressRangeEXT* GetBufferAddressRangePtr()
-    {
-        return &addressRange_;
-    }
+    
 
-    DescriptorHandle GetDescriptorHandle()
-    {
-      return DescriptorHandle(resourceHeapIndex_, 0);
-    }
+  public:
+    vk::DeviceAddressRangeEXT* GetBufferAddressRangePtr();
+
+
+    vk::Buffer GetVkBuffer() {return buffer;}
 
     void* map();
     void  unmap();

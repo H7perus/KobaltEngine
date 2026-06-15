@@ -3,6 +3,7 @@ kobalt_add_lib(Client)
 target_link_libraries(Client PRIVATE Base)
 target_link_libraries(Client PRIVATE Engine)
 target_link_libraries(Client PRIVATE GpuInterface)
+target_link_libraries(Client PRIVATE Renderer)
 target_link_libraries(Client PUBLIC SDL3::SDL3)
 target_link_libraries(Client PRIVATE ${Vulkan_LIBRARIES})
 

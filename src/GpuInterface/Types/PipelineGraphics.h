@@ -1,7 +1,9 @@
 #pragma once
 #include "Pipeline.h"
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
+
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {

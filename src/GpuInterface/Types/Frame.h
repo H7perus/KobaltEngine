@@ -4,14 +4,15 @@
 #include "Device.h"
 
 #include "vulkan/vulkan.hpp"
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {
     //This class represents the Vulkan objects that belong to one frame-in-flight. The number is equal to the swapchain images
-    class InflightFrame : public IResource
+    class GPUI_DLL_API InflightFrame : public IResource
     {
         friend class Swapchain;
-        KE_REFLECT(InflightFrame)
+        KE_GPUREFLECT(InflightFrame)
     public:
       void Init(KE::VK::Device &device);
       void Destroy(KE::VK::Device &device);

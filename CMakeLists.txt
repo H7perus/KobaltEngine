@@ -6,7 +6,7 @@ set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(KobaltEngine)
 
@@ -50,7 +50,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(vk-bootstrap)
 
-set(SLANG_VERSION "2026.3.1")
+set(SLANG_VERSION "2026.7.1")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(SLANG_PLATFORM "windows")
@@ -115,4 +115,5 @@ add_subdirectory(${ENGINE_SRC}/Engine)
 add_subdirectory(${ENGINE_SRC}/Client ${ENGINE_SRC}/Client)
 add_subdirectory(${ENGINE_SRC}/Server ${ENGINE_SRC}/Server)
 add_subdirectory(${ENGINE_SRC}/GpuInterface ${ENGINE_SRC}/GpuInterface)
+add_subdirectory(${ENGINE_SRC}/Renderer ${ENGINE_SRC}/Renderer)
 add_subdirectory(${ENGINE_SRC}/Launcher ${ENGINE_SRC}/Launcher)

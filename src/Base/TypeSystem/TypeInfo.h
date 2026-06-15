@@ -6,7 +6,7 @@ namespace KE {
 
 	struct TypeInfo
 	{
-		u32 typeID = 0;
+		u64 typeID = 0;
 		std::string typeName;
 	};
 }

@@ -107,6 +107,11 @@ vk::DeviceAddress Buffer::GetBufferAddress()
     return ((vk::Device)(ContextManager::GetInstance().GetDevice(deviceIndex_))).getBufferAddress(buffer);
 }
 
+vk::DeviceAddressRangeEXT* KE::VK::Buffer::GetBufferAddressRangePtr()
+{
+    return &addressRange_;
+}
+
 
 void* KE::VK::Buffer::map()
 {

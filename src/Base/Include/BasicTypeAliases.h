@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
+#include <stdfloat>
 
 
 //---------------------------------------------------------
@@ -20,6 +20,7 @@ typedef uint64_t u64;
 
 //TODO WITH CPP23: This is bad! C++23 introduces fixed width floating point sizes. We should use those instead
 //typedef float16_t f16;
+
 typedef float f32;
 typedef double f64;
 

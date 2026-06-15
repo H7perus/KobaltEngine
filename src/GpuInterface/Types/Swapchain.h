@@ -9,9 +9,9 @@
 
 #include <vector>
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
 
-#include "BasicTypeAliases.h"
+#include "GpuInterface/BasicTypeAliases.h"
 
 namespace KE::VK
 {

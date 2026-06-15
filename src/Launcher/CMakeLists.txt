@@ -23,3 +23,8 @@ target_link_libraries(Launcher PRIVATE Base)
 target_link_libraries(Launcher PRIVATE Engine)
 target_link_libraries(Launcher PRIVATE Client)
 target_link_libraries(Launcher PRIVATE GpuInterface)
+
+add_custom_command(TARGET Launcher POST_BUILD        # Adds a post-build event to MyTest
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+        "${slang_SOURCE_DIR}/bin/slang-compiler.dll"      # <--this is in-file
+        $<TARGET_FILE_DIR:Launcher>)                 # <--this is out-file path

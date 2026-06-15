@@ -37,19 +37,6 @@ PipelineGraphics::PipelineGraphics(u32 deviceIndex, SlangCompiledUnit shader)
     renderingCreateInfo.pColorAttachmentFormats = &format;
     
 
-    vk::VertexInputBindingDescription bindings[] = {
-        vk::VertexInputBindingDescription(0, 32, vk::VertexInputRate::eVertex)};
-
-    vk::VertexInputAttributeDescription attrs[] = {
-        vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0),  // pos
-        vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, 12), // color
-        vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, 24),    // uv
-    };
-
-    auto vertexInput = vk::PipelineVertexInputStateCreateInfo{}
-                           .setVertexBindingDescriptions(bindings)
-                           .setVertexAttributeDescriptions(attrs);
-
     vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
     pipelineInputAssemblyStateCreateInfo.topology = vk::PrimitiveTopology::eTriangleList;
 
@@ -66,7 +53,8 @@ PipelineGraphics::PipelineGraphics(u32 deviceIndex, SlangCompiledUnit shader)
 
     std::vector<vk::DynamicState> dynamicStates = {
         vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor};
+        vk::DynamicState::eScissor,
+        vk::DynamicState::eVertexInputEXT};
 
     vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
     pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
@@ -82,12 +70,15 @@ PipelineGraphics::PipelineGraphics(u32 deviceIndex, SlangCompiledUnit shader)
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments    = &blendAttachment;
 
+
+    vk::PipelineVertexInputStateCreateInfo emptyVertexInput{};
+
     vk::GraphicsPipelineCreateInfo pipelineInfo;
     pipelineInfo.pNext = &renderingCreateInfo;
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages.data();
     pipelineInfo.layout = VK_NULL_HANDLE;
-    pipelineInfo.pVertexInputState = &vertexInput;
+    pipelineInfo.pVertexInputState = &emptyVertexInput;
     pipelineInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
     pipelineInfo.pMultisampleState = &pipelineMultisampleStateCreateInfo;
     pipelineInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
@@ -136,19 +127,6 @@ PipelineGraphics::PipelineGraphics(u32 deviceIndex, std::vector<uint32_t> vertSp
     renderingCreateInfo.colorAttachmentCount    = 1;
     renderingCreateInfo.pColorAttachmentFormats = &format;
 
-    vk::VertexInputBindingDescription bindings[] = {
-        vk::VertexInputBindingDescription(0, 32, vk::VertexInputRate::eVertex)};
-
-    vk::VertexInputAttributeDescription attrs[] = {
-        vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0),
-        vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, 12),
-        vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, 24),
-    };
-
-    auto vertexInput = vk::PipelineVertexInputStateCreateInfo{}
-                           .setVertexBindingDescriptions(bindings)
-                           .setVertexAttributeDescriptions(attrs);
-
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
     inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
 
@@ -183,7 +161,6 @@ PipelineGraphics::PipelineGraphics(u32 deviceIndex, std::vector<uint32_t> vertSp
     pipelineInfo.stageCount          = 2;
     pipelineInfo.pStages             = shaderStages.data();
     pipelineInfo.layout              = VK_NULL_HANDLE;
-    pipelineInfo.pVertexInputState   = &vertexInput;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pMultisampleState   = &multisample;
     pipelineInfo.pRasterizationState = &rasterization;

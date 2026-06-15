@@ -1,8 +1,6 @@
 #pragma once
 #include "BasicTypeAliases.h"
-#include <memory>
 #include <string>
-
 
 #include "TypeInfo.h"
 #include "TypeRegister.h"
@@ -14,32 +12,37 @@ namespace KE
 class IReflectedType
 {
   private:
-    inline static KE::TypeInfo const *const m_TypeInfo = nullptr;
+    inline static KE::TypeInfo const* const m_TypeInfo = nullptr;
 
   public:
     IReflectedType()                  = default;
     virtual ~IReflectedType()         = default;
-    virtual u32         GetTypeID()   = 0;                                                                                                                 \
+    virtual u64         GetTypeID()   = 0;
     virtual std::string GetTypeName() = 0;
 };
 
 } // namespace KE
 
 #define KE_REFLECT(TypeName)                                                                                           \
-    inline static KE::TypeInfo const *const m_TypeInfo = KE::TypeRegister::RegisterType(#TypeName);                          \
+  private:                                                                                                             \
+    static KE::TypeInfo const* GetTypeInfo()                                                                           \
+    {                                                                                                                  \
+        static KE::TypeInfo const* typeInfo = KE::TypeRegister::RegisterType(#TypeName);                               \
+        return typeInfo;                                                                                               \
+    }                                                                                                                  \
                                                                                                                        \
   public:                                                                                                              \
-    virtual u32 GetTypeID() override                                                                                   \
+    virtual u64 GetTypeID() override                                                                                   \
     {                                                                                                                  \
-        return m_TypeInfo->typeID;                                                                                     \
+        return GetTypeInfo()->typeID;                                                                                  \
     }                                                                                                                  \
-    static u32 GetStaticTypeID()                                                                              \
+    static u64 GetStaticTypeID()                                                                                       \
     {                                                                                                                  \
-        return m_TypeInfo->typeID;                                                                                     \
+        return GetTypeInfo()->typeID;                                                                                  \
     }                                                                                                                  \
     virtual std::string GetTypeName() override                                                                         \
     {                                                                                                                  \
         return #TypeName;                                                                                              \
     }                                                                                                                  \
                                                                                                                        \
-  private:\
+  private:

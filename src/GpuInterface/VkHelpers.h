@@ -8,7 +8,7 @@
 #include "VkBootstrap.h"
 
 #include "SDL3/SDL_vulkan.h"
-#include "BasicTypeAliases.h"
+#include "GpuInterface/BasicTypeAliases.h"
 
 #include "Types/Device.h"
 
@@ -63,6 +63,7 @@ inline vkb::Device createDevice(vkb::Instance vkb_inst, vk::SurfaceKHR surface)
 	auto phys_ret = selector//.set_surface(NULL)
 		.add_required_extension("VK_EXT_descriptor_heap")
 		.add_required_extension("VK_KHR_shader_untyped_pointers")
+		.add_required_extension("VK_EXT_vertex_input_dynamic_state")
 		.set_minimum_version(1, 4)
 		.require_present(true)
 		.set_surface(surface)
@@ -76,6 +77,9 @@ inline vkb::Device createDevice(vkb::Instance vkb_inst, vk::SurfaceKHR surface)
 	features13.synchronization2 = VK_TRUE;
 	features13.dynamicRendering = VK_TRUE;
 
+
+	vk::PhysicalDeviceVertexInputDynamicStateFeaturesEXT vertexInputDynamicStateFeat;
+	vertexInputDynamicStateFeat.vertexInputDynamicState = VK_TRUE;
 	vk::PhysicalDeviceDescriptorHeapFeaturesEXT descHeapFeatures;
 	descHeapFeatures.descriptorHeap = VK_TRUE;
 
@@ -93,6 +97,7 @@ inline vkb::Device createDevice(vkb::Instance vkb_inst, vk::SurfaceKHR surface)
 		.add_pNext(&features13)
 		.add_pNext(&descHeapFeatures)
 		.add_pNext(&untypedPtrFeatures)  // also need this one
+		.add_pNext(&vertexInputDynamicStateFeat)
 		//.enable_extension("VK_EXT_descriptor_heap")
 		//.enable_extension("VK_KHR_shader_untyped_pointers")
 		//.add_pNext(&DynamicStateFeat)

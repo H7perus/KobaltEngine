@@ -1,9 +1,11 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
 #include "Buffer.h"
-#include "BasicTypeAliases.h"
+#include "GpuInterface/BasicTypeAliases.h"
 
-#include "RendererDLL.h"
+#include "GpuInterface/GpuInterface.h"
+
+#include "GpuInterfaceDLL.h"
 
 namespace KE::VK
 {
