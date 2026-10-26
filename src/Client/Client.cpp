@@ -160,7 +160,7 @@ void Client::Main()
 
     testSubmesh.attributeDescs_.push_back(attribDesc);
 
-    renderer.RegisterComponent(testEnt.get(), testComp.get());
+    renderer.RegisterComponent(testEnt, testComp);
 
 
     while (isRunning)

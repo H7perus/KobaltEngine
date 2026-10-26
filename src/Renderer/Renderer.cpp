@@ -18,18 +18,18 @@ KE::R::Renderer::Renderer()
 {
 }
 
-void KE::R::Renderer::RegisterComponent(Entity* entity, IEntityComponent* component)
+void KE::R::Renderer::RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)
 {
     if (component->GetTypeID() == R::StaticMeshComponent::GetStaticTypeID())
     {
-        R::StaticMeshComponent* comp = (R::StaticMeshComponent*)(component);
+        std::shared_ptr<R::StaticMeshComponent> comp = std::static_pointer_cast<R::StaticMeshComponent>(component);
 
         // TODO: Add mesh to render context
         R::RenderContext::GetInstance().meshes_.try_emplace("test", comp->mesh);
     }
 }
 
-void KE::R::Renderer::UnregisterComponent(Entity* entity, IEntityComponent* component)
+void KE::R::Renderer::UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)
 {
 }
 

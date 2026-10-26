@@ -23,9 +23,9 @@ class RENDERER_DLL_API Renderer : public EntityWorldSystem
     Renderer& operator=(Renderer&&)      = default;
 
 
-    virtual void RegisterComponent(Entity* entity, IEntityComponent* component);
+    virtual void RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) override;
 
-    virtual void UnregisterComponent(Entity* entity, IEntityComponent* component);
+    virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) override;
 
     // Build up the task graph
     void Init(SDL_Window*& windowPtr);

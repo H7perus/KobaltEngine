@@ -9,18 +9,21 @@
 
 namespace KE
 {
-class ENGINE_DLL_API EntityWorldSystem : public IReflectedType
+class EntityWorldSystem : public IReflectedType
 {
 
   public:
-    EntityWorldSystem();
-    virtual ~EntityWorldSystem();
+    EntityWorldSystem()                                    = default;
+    virtual ~EntityWorldSystem()                           = default;
     EntityWorldSystem(const EntityWorldSystem&)            = delete;
     EntityWorldSystem& operator=(const EntityWorldSystem&) = delete;
-    EntityWorldSystem(EntityWorldSystem&&);
-    EntityWorldSystem& operator=(EntityWorldSystem&&);
+    EntityWorldSystem(EntityWorldSystem&&)                 = default;
+    EntityWorldSystem& operator=(EntityWorldSystem&&)
+    {
+        return *this;
+    }
 
-    virtual void RegisterComponent(Entity* entity, IEntityComponent* component)   = 0;
-    virtual void UnregisterComponent(Entity* entity, IEntityComponent* component) = 0;
+    virtual void RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)   = 0;
+    virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) = 0;
 };
 } // namespace KE

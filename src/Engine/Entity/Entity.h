@@ -1,7 +1,8 @@
 #pragma once
 #include "BasicTypeAliases.h"
-#include "Engine/Entity/EntityTransform.h"
+#include "Engine/General/Transform.h"
 #include "Engine/Entity/EntityComponent.h"
+#include "Engine/General/View.h"
 
 
 
@@ -26,11 +27,14 @@ namespace KE
 		//unique entity ID
 		u32 entityID_ = 0;
 
-		Transform transform_;
+		
 
 		std::vector<std::shared_ptr<IEntityComponent>> components_;
 
 	public:
+		//HACK: This should be hidden to anything but Entity Systems and Entity World Systems, but alas, for testing
+		Transform transform_;
+
 		Entity(std::string entityTypeName, u64 typeID) : entityTypeName_(entityTypeName), typeID_(typeID) {};
 
 		template<std::derived_from<IEntityComponent> T>
@@ -45,6 +49,11 @@ namespace KE
 			}
 			//TODO: This should straight up except. No tolerance for silent failure
 			return nullptr;
+		}
+
+		glm::mat3x4 GetRelativeTransform(KE::View view)
+		{
+			return transform_.GetRelativeTransform(view.origin);
 		}
 
 		bool IsValid() { return state_ == 2;};

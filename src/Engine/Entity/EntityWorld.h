@@ -2,11 +2,12 @@
 
 #include "Engine/Entity/Entity.h"
 #include "Engine/Entity/EntityComponent.h"
-#include "Engine/Entity/EntityWorldSystem.h"
 #include "Engine/Entity/EntityFactory.h"
+#include "Engine/Entity/EntityWorldSystem.h"
 #include "EngineDLL.h"
 #include "Util/FNV1a.h"
 #include <concepts>
+
 
 namespace KE
 {
@@ -20,23 +21,24 @@ class ENGINE_DLL_API EntityWorld : public IReflectedType
     ~EntityWorld() = default;
 
 
-    void AddEntity(const char* entityTypeName);
+    std::shared_ptr<Entity> AddEntity(const char* entityTypeName);
 
-    void AddEntity(u64 entityTypeID);
+    std::shared_ptr<Entity> AddEntity(u64 entityTypeID);
 
-    void AddEntityWithID(u64 entityTypeID, u64 entityID);
+    std::shared_ptr<Entity> AddEntityWithID(u64 entityTypeID, u64 entityID);
 
     void RegisterEntity(std::shared_ptr<Entity>& entity);
 
     void RegisterEntityWithSystems(std::shared_ptr<Entity>& entity);
 
-    template <std::derived_from<IEntityComponent> T> void AddComponentToEntity(Entity* entity)
+    template <std::derived_from<IEntityComponent> T> 
+    void AddComponentToEntity(std::shared_ptr<Entity>& entity)
     {
         entity->components_.push_back(std::make_shared<T>());
 
         for (std::shared_ptr<EntityWorldSystem> worldSystem : worldSystems)
         {
-            worldSystem->RegisterComponent(entity, entity->components_.back().get());
+            worldSystem->RegisterComponent(entity, entity->components_.back());
         }
     }
 

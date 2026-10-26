@@ -11,10 +11,13 @@ namespace KE
 {
     class Transform
     {
+        //TODO: Review privacy of these members
+        public:
         glm::vec<3, glm::f64> position_ = {0, 0, 0};
         glm::mat3 localTransform_ = glm::identity<glm::mat3>();
 
-        public:
+
+
         Transform() = default;
         Transform(glm::vec<3, glm::f64> position, glm::mat3 localTransform) : position_(position), localTransform_(localTransform) {}
         Transform(glm::mat4 transform)
@@ -28,11 +31,11 @@ namespace KE
             position_ = transform[3];
         }
 
-        inline glm::mat4x3 GetRelativeTransform(glm::vec<3, glm::f64> center) const
+        inline glm::mat3x4 GetRelativeTransform(glm::vec<3, glm::f64> center) const
         {
             auto retMat = glm::mat4x3(localTransform_);
             retMat[3] = glm::vec3(position_ - center);
-            return retMat;
+            return glm::transpose(retMat);
         }
 
     };

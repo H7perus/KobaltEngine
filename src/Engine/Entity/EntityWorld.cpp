@@ -8,22 +8,23 @@ KE::EntityWorld::EntityWorld()
 {
 }
 
-void KE::EntityWorld::AddEntity(const char* entityTypeName)
+std::shared_ptr<KE::Entity> KE::EntityWorld::AddEntity(const char* entityTypeName)
 {
-    AddEntity(FNV1aTo64(entityTypeName));
+    return AddEntity(FNV1aTo64(entityTypeName));
 }
 
-void KE::EntityWorld::AddEntity(u64 entityTypeID)
+std::shared_ptr<KE::Entity> KE::EntityWorld::AddEntity(u64 entityTypeID)
 {
-    AddEntityWithID(entityTypeID, incrementingID_);
-    incrementingID_++;
+    return AddEntityWithID(entityTypeID, incrementingID_++);
 }
-void KE::EntityWorld::AddEntityWithID(u64 entityTypeID, u64 entityID) 
+std::shared_ptr<KE::Entity> KE::EntityWorld::AddEntityWithID(u64 entityTypeID, u64 entityID) 
 {
     std::shared_ptr<Entity> entity = EntityFactory::Create(entityTypeID);
 
     entity->entityID_ = entityID;
     entities.push_back(entity);
+
+    return entity;
 }
 
 
@@ -39,7 +40,7 @@ void KE::EntityWorld::RegisterEntityWithSystems(std::shared_ptr<Entity>& entity)
     {
         for(std::shared_ptr<IEntityComponent> comp : entity->components_)
         {
-            worldSystem->RegisterComponent(entity.get(), comp.get());
+            worldSystem->RegisterComponent(entity, comp);
         }
         
     }
