@@ -17,11 +17,11 @@ namespace KE
 
 	Duration GlobalClock::QueryGlobalTime()
 	{
-		u64 time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - launchTime_).count();
+		u64 time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - launchTime_).count();
 		return Duration(time);
 	}
 
-	std::chrono::steady_clock::time_point GlobalClock::launchTime_ = std::chrono::high_resolution_clock::now();
+	std::chrono::steady_clock::time_point GlobalClock::launchTime_ = std::chrono::steady_clock::now();
 
 
 	// LOCAL CLOCK
@@ -33,12 +33,12 @@ namespace KE
 
 	void LocalClock::Reset()
 	{
-		launchTime_ = std::chrono::high_resolution_clock::now();
+		launchTime_ = std::chrono::steady_clock::now();
 	}
 
 	Duration LocalClock::QueryTime()
 	{
-		return Duration((std::chrono::high_resolution_clock::now() - launchTime_).count());
+		return Duration((std::chrono::steady_clock::now() - launchTime_).count());
 	}
 
 }

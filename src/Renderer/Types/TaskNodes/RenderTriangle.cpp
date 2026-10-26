@@ -79,7 +79,7 @@ void KE::VK::RenderTriangle::Execute(vk::CommandBuffer cmd)
 
     auto& renderContext = R::RenderContext::GetInstance();
 
-    mesh = &renderContext.meshes_["C:/Users/raket/source/repos/CobaltFPSTest/Engine/assets/error.gltf"]->submeshes_[0];
+    mesh = &renderContext.meshes_["../../../../../Engine/assets/error.gltf"]->submeshes_[0];
 
     SwapchainOutput& swapchainOutput = writes_["SwapchainOutput"].GetResourceRef<SwapchainOutput>();
 

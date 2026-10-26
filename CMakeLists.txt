@@ -2,11 +2,10 @@ cmake_minimum_required(VERSION 4.0)
 
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+#compiler is picked by the preset (CMakePresets.json)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(KobaltEngine)
 
@@ -49,8 +48,10 @@ FetchContent_Declare(
   GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(vk-bootstrap)
+#static lib that ends up inside our shared libs -> needs -fPIC on Linux. No-op on Windows.
+set_target_properties(vk-bootstrap PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-set(SLANG_VERSION "2026.11")
+set(SLANG_VERSION "2026.20")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(SLANG_PLATFORM "windows")
@@ -90,10 +91,10 @@ include_directories(${ENGINE_SRC})
 find_package(OpenGL REQUIRED)         # OpenGL comes from the system
 find_package(glm CONFIG REQUIRED) 
 
-set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
-set(Vulkan_INCLUDE_DIR "$ENV{VULKAN_SDK}/Include")
-include_directories(BEFORE "$ENV{VULKAN_SDK}/Include")
+#FindVulkan picks up $ENV{VULKAN_SDK} on its own (lib/include on Linux, Lib/Include on Windows)
 find_package(Vulkan REQUIRED)
+#SDK headers have to win over whatever vulkan headers vcpkg drags in
+include_directories(BEFORE ${Vulkan_INCLUDE_DIRS})
 
 
 #find_package(slang CONFIG REQUIRED)
@@ -102,6 +103,11 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(miniz REQUIRED)
+
+#C++26 reflection. Only applies to our own targets, the FetchContent deps above are already declared.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-freflection>)
+endif()
 
 #ENGINE
 add_subdirectory(${ENGINE_SRC}/Base)

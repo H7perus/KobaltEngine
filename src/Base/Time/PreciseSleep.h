@@ -1,38 +1,51 @@
 #pragma once
+#include <algorithm>
+#include <chrono>
 #include <concepts>
 #include <thread>
 
+#ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
-#pragma comment(lib, "winmm.lib")
+#pragma comment(lib, "winmm.lib") //MSVC only, GCC ignores this. Base links winmm in its CMakeLists for MinGW.
+#endif
 
 #include "Base/Time/Clocks.h"
 
 #include "BasicTypeAliases.h"
 
-PROCESS_POWER_THROTTLING_STATE PowerThrottling;
+#ifdef _WIN32
+inline PROCESS_POWER_THROTTLING_STATE PowerThrottling;
+#endif
 
 
 
 //TODO FOR PROD: find a long term solution to the windows fuckery. This *might* be fine already, idk
+//Linux needs no timer resolution fuckery, the default timer slack is ~50us.
 
 namespace KE
 {
 	template<std::unsigned_integral T>
 	void PreciseSleep(T nanos)
 	{
+#ifdef _WIN32
 		timeBeginPeriod(1);
+#endif
 		Duration current = GlobalClock::QueryGlobalTime();
 		Duration end = current + nanos;
-		std::this_thread::sleep_for(nanos - u64(3e6));
+		if (nanos > u64(3e6))
+			std::this_thread::sleep_for(std::chrono::nanoseconds(nanos - u64(3e6)));
 
 		while (GlobalClock::QueryGlobalTime() < end);
+#ifdef _WIN32
 		timeEndPeriod(1);
+#endif
 	}
 
 	template<std::signed_integral T>
 	void PreciseSleep(T nanos)
 	{
+#ifdef _WIN32
 		RtlZeroMemory(&PowerThrottling, sizeof(PowerThrottling));
 		PowerThrottling.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
 
@@ -45,6 +58,7 @@ namespace KE
 			sizeof(PowerThrottling));
 
 		timeBeginPeriod(1);
+#endif
 		Duration current = GlobalClock::QueryGlobalTime();
 		Duration end = current + Duration(nanos);
 
@@ -52,6 +66,8 @@ namespace KE
 
 		while (GlobalClock::QueryGlobalTime() < end);
 
+#ifdef _WIN32
 		timeEndPeriod(1);
+#endif
 	}
 }

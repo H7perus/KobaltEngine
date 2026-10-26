@@ -19,12 +19,7 @@ target_link_libraries(Renderer PRIVATE Base)
 target_link_libraries(Renderer PRIVATE GpuInterface)
 target_link_libraries(Renderer PRIVATE Engine)
 
-target_link_libraries(Renderer PRIVATE
-    $<$<CONFIG:Debug>:$ENV{VULKAN_SDK}/Lib/shaderc_combinedd.lib>
-    $<$<CONFIG:Release>:$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib>
-)
-
-target_link_libraries(Renderer PUBLIC ${Vulkan_LIBRARIES} vk-bootstrap::vk-bootstrap slang::slang)
+target_link_libraries(Renderer PUBLIC Vulkan::Vulkan vk-bootstrap::vk-bootstrap slang::slang)
 
 target_include_directories(Renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_include_directories(Renderer PUBLIC 

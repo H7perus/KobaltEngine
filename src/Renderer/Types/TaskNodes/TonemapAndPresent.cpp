@@ -16,7 +16,7 @@ KE::R::TonemapAndPresent::TonemapAndPresent()
 
     KE::VK::SlangCompileContext compileContext;
     SlangCompiledUnit           slangGraphicsShader = compileContext.CompileShaderPath(
-        "C:/Users/raket/source/repos/CobaltFPSTest/Engine/src/Renderer/Shaders/ScreenspaceTest.slang");
+        "../../../../../Engine/src/Renderer/Shaders/ScreenspaceTest.slang");
 
     auto specialisedShader  = slangGraphicsShader.Specialise();
     pipeline = VK::PipelineGraphics(0, specialisedShader);

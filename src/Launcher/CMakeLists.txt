@@ -24,7 +24,11 @@ target_link_libraries(Launcher PRIVATE Engine)
 target_link_libraries(Launcher PRIVATE Client)
 target_link_libraries(Launcher PRIVATE GpuInterface)
 
-add_custom_command(TARGET Launcher POST_BUILD        # Adds a post-build event to MyTest
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
-        "${slang_SOURCE_DIR}/bin/slang-compiler.dll"      # <--this is in-file
-        $<TARGET_FILE_DIR:Launcher>)                 # <--this is out-file path
+#Windows has no rpath, so the slang dll has to sit next to the exe.
+#On Linux the build tree rpath already points at ${slang_SOURCE_DIR}/lib.
+if(WIN32)
+    add_custom_command(TARGET Launcher POST_BUILD        # Adds a post-build event to MyTest
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+            "${slang_SOURCE_DIR}/bin/slang-compiler.dll"      # <--this is in-file
+            $<TARGET_FILE_DIR:Launcher>)                 # <--this is out-file path
+endif()

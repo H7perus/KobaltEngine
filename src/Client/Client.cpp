@@ -30,7 +30,7 @@ namespace KE
 {
 int Client::Initialise()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (!SDL_Init(SDL_INIT_VIDEO)) //SDL3 returns bool, not an int error code
     {
         printf("SDL initialization failed: %s\n", SDL_GetError());
         return 1;
@@ -62,8 +62,10 @@ void Client::Main()
     LoopRateLimiter fps_limiter(100.f);
     bool            isRunning = true;
 
-    VULKAN_HPP_DEFAULT_DISPATCHER.init();
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(((VkGpuInterface*)GpuInterface)->vk_inst_));
+    //GpuInterface is never Init()'d anymore (Renderer owns the instance), so vk_inst_ is null and this nulls every
+    //instance/device function. On Linux the dispatcher copies of all .so's get merged, so it wiped Renderer's too.
+    //VULKAN_HPP_DEFAULT_DISPATCHER.init();
+    //VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(((VkGpuInterface*)GpuInterface)->vk_inst_));
 
     VK::TaskGraph taskGraph;
 
@@ -75,7 +77,7 @@ void Client::Main()
 
     std::shared_ptr<KE::R::StaticMeshComponent> testComp2 = testEnt2->GetComponentPtr<KE::R::StaticMeshComponent>();
 
-    testComp2->meshPath = "C:/Users/raket/source/repos/CobaltFPSTest/Engine/assets/error.gltf";
+    testComp2->meshPath = "../../../../../Engine/assets/error.gltf";
 
     renderer.RegisterComponent(testEnt2, testComp2);
 

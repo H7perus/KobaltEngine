@@ -2,16 +2,42 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "debug",
-            "displayName": "Debug",
+            "name": "base",
+            "hidden": true,
             "description": "Sets Ninja generator, build and install directory",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_TOOLCHAIN_FILE": "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/${presetName}"
             }
+        },
+        {
+            "name": "linux-gcc-debug",
+            "displayName": "Linux GCC Debug",
+            "inherits": "base",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "VCPKG_TARGET_TRIPLET": "x64-linux-dynamic"
+            }
+        },
+        {
+            "name": "windows-mingw-debug",
+            "displayName": "Windows MinGW GCC Debug",
+            "inherits": "base",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+                "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+            }
         }
+    ],
+    "buildPresets": [
+        { "name": "linux-gcc-debug", "configurePreset": "linux-gcc-debug" },
+        { "name": "windows-mingw-debug", "configurePreset": "windows-mingw-debug" }
     ]
 }

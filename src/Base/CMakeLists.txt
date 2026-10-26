@@ -17,4 +17,9 @@ target_include_directories(Base PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_definitions(Base PRIVATE BASE_DLL_EXPORTS)
 
+#timeBeginPeriod/timeEndPeriod in Time/PreciseSleep.h. PUBLIC since that header is used by whoever includes it.
+if(WIN32)
+	target_link_libraries(Base PUBLIC winmm)
+endif()
+
 set_target_properties(Base PROPERTIES FOLDER Engine)
