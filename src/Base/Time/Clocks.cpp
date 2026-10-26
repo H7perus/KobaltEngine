@@ -17,7 +17,7 @@ namespace KE
 
 	Duration GlobalClock::QueryGlobalTime()
 	{
-		u64 time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - launchTime_).count();
+		i64 time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - launchTime_).count();
 		return Duration(time);
 	}
 

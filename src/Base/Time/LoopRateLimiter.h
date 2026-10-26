@@ -53,7 +53,8 @@ namespace KE
 
 			PreciseSleep(sleep_duration);
 
-			last_sleep_duration_ = KE::Duration(sleep_duration);
+			//we didn't actually sleep if we were in a deficit, so don't carry a negative sleep into the next interval
+			last_sleep_duration_ = KE::Duration(std::max(sleep_duration, i64(0)));
 			last_time_ = current_time;
 			last_true_interval_ = true_interval;
 

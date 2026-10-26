@@ -1,29 +1,25 @@
 #pragma once
 
+#include <compare>
+#include <concepts>
 #include <cstdint>
-#include <cassert>
 
 #include "BasicTypeAliases.h"
 
-//Durations can be timestamps, but also be used as intervals and such
+//Durations can be timestamps, but also be used as intervals and such.
+//Signed, so they can also express relative times (negative = before/behind).
 namespace KE
 {
 	struct Duration
 	{
-		u64 nanos = 0;
+		i64 nanos = 0;
 
 		Duration() {};
 
-		template<std::signed_integral T>
+		template<std::integral T>
 		Duration(T durr)
 		{
-			nanos = u64(std::max(durr, T(0)));
-		}
-
-		template<std::unsigned_integral T>
-		Duration(T durr)
-		{
-			nanos = u64(durr);
+			nanos = static_cast<i64>(durr);
 		}
 
 		Duration operator+(const Duration& other) const {
@@ -32,7 +28,6 @@ namespace KE
 
 
 		Duration operator-(const Duration& other) const {
-			assert(nanos - other.nanos <= nanos);
 			return Duration{ nanos - other.nanos };
 		}
 
