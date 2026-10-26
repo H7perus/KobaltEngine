@@ -1,9 +1,19 @@
 #include "RenderContext.h"
+#include "GpuInterface/Types/ResourceSet.h"
+
+#include "Renderer/Types/FrameData.h"
+#include "vulkan/vulkan.hpp"
 
 KE::R::RenderContext::RenderContext()
 {
     vertexPosBuffer = VK::Buffer(0, 1000000, vk::BufferUsageFlagBits::eVertexBuffer,
                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    HDRFramebuffer = VK::ResourceSet<VK::Texture>({}, 0, 800, 600, vk::Format::eR16G16B16A16Sfloat, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,vk::MemoryPropertyFlagBits::eDeviceLocal, true);
+
+    transformBuffers = VK::ResourceSet<VK::Buffer>({VK::FRAMEALIGNED, numFramesInFlight}, 0, sizeof(glm::mat3x4) * 100, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, true);
+    
+    FrameDataBuffers = VK::ResourceSet<VK::Buffer>({VK::FRAMEALIGNED, numFramesInFlight}, 0, sizeof(FrameData_t), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, true);
 }
 
 

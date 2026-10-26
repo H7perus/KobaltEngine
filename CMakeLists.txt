@@ -50,7 +50,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(vk-bootstrap)
 
-set(SLANG_VERSION "2026.7.1")
+set(SLANG_VERSION "2026.11")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(SLANG_PLATFORM "windows")
@@ -102,7 +102,6 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(miniz REQUIRED)
-
 
 #ENGINE
 add_subdirectory(${ENGINE_SRC}/Base)

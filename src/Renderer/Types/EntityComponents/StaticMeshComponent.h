@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Entity/EntityComponent.h"
+#include "Engine/General/Transform.h"
 #include "Renderer/Types/Mesh.h"
 #include "Renderer/Types/Submesh.h"
 
@@ -15,6 +16,8 @@ namespace KE::R
         StaticMeshComponent() = default;
 
         std::string meshPath = "";
+
+        u32 gpuTransformIndex = 0;
 
         std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();
 

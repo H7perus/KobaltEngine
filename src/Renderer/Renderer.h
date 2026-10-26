@@ -1,18 +1,21 @@
 #pragma once
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include "GpuInterface/Types/TaskGraph.h"
+#include "GpuInterface/Types/Texture.h"
 
-#include "Engine/Entity/EntityWorldSystem.h"
+#include "Engine/Interfaces/IRenderer.h"
 
 #include "SDL3/SDL.h"
 #include "RendererDLL.h"
 
 namespace KE::R
 {
-class RENDERER_DLL_API Renderer : public EntityWorldSystem
+class RENDERER_DLL_API Renderer : public IRenderer
 {
     KE_REFLECT(Renderer)
     VK::TaskGraph taskGraph_;
+
+    KE::VK::Texture testTexture;
   public:
     Renderer();
     ~Renderer() = default;
@@ -27,10 +30,9 @@ class RENDERER_DLL_API Renderer : public EntityWorldSystem
 
     virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) override;
 
-    // Build up the task graph
-    void Init(SDL_Window*& windowPtr);
 
-    // Execute the task graph
-    void Draw();
+    virtual void Init(SDL_Window*& windowPtr) override;
+
+    virtual void Draw() override;
 };
 } // namespace KE

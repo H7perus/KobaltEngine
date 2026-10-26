@@ -20,6 +20,7 @@
 #include "GpuInterface/Types/ResourceSet.h"
 #include "GpuInterface/VkGpuInterface.h"
 #include "Renderer/Types/EntityComponents/StaticMeshComponent.h"
+#include "Time/Clocks.h"
 
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
@@ -47,40 +48,14 @@ int Client::Initialise()
         SDL_Quit();
         return 1;
     }
-
-    // SDL_SetWindowFullscreen(window, true);
     
-
-    ((VkGpuInterface*)GpuInterface)->window_ = window;
-
-    GpuInterface->Init();
     renderer.Init(window);
-
-    // commandPool = ((VkGpuInterface*)GpuInterface)->deviceManager_.CreateGraphicsCommandPool();
-
-    // vk::CommandBufferAllocateInfo allocInfo;
-    // allocInfo.commandPool = commandPool;
-    // allocInfo.level = vk::CommandBufferLevel::ePrimary;
-    // allocInfo.commandBufferCount = 1;
-
-    // commandBuffer =
-    // vk::Device(((VkGpuInterface*)GpuInterface)->deviceManager_.GetDevice()).allocateCommandBuffers(allocInfo)[0];
 
     return 0;
 }
 void Client::Render()
 {
 }
-
-f32 vertexInfo[] = {0.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.5, 0.0, -1.0, 1.0, 0.5, 0.0,
-                    1.0, 0.0,  0.0, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0,  1.0, 1.0, 1.0};
-
-
-f32 vertexPos[] = {0.0f, -1.0f, 0.5f, -1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 0.5f};
-
-f32 vertexAttribs[] = {1.0, 0.0, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0};
-
-int vertexIndices[] = {0, 1, 2};
 
 void Client::Main()
 {
@@ -90,78 +65,19 @@ void Client::Main()
     VULKAN_HPP_DEFAULT_DISPATCHER.init();
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(((VkGpuInterface*)GpuInterface)->vk_inst_));
 
-    VK::ResourceSet swapchainOutputSet =
-        VK::ResourceSet::Create<VK::SwapchainOutput>({VK::ResourceSetUsage::FRAMEALIGNED, 3});
-
     VK::TaskGraph taskGraph;
-
-    
-
-
-    VK::ResourceSet posBufferSet = VK::ResourceSet::Create<VK::Buffer>({}, 0, sizeof(vertexPos), vk::BufferUsageFlagBits::eVertexBuffer,
-                         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    VK::Buffer& posBuffer = posBufferSet.GetResourceHandle().GetResourceRef<VK::Buffer>();
-
-    f32* mappedPosBuffer = (float*)posBuffer.map();
-    memcpy(mappedPosBuffer, vertexPos, sizeof(vertexPos));
-    posBuffer.unmap();
-
-
-    taskGraph.AddTask<VK::StageBarrier>(vk::PipelineStageFlagBits2::eTopOfPipe,
-                                        vk::PipelineStageFlagBits2::eColorAttachmentOutput);
-    taskGraph.AddTask<VK::RenderTriangle>(0, (VkGpuInterface*)GpuInterface);
-    
-    taskGraph.AddTask<VK::SubmitAndPresent>(0);
-
-
-    taskGraph.Compile();
 
     entityWorld.AddWorldSystem<R::Renderer>();
 
-    entityWorld.AddEntity("TestDecorationEntity");
-
-    std::shared_ptr<Entity> testEnt = entityWorld.entities[0];
-
-
-    std::shared_ptr<KE::R::StaticMeshComponent> testComp = testEnt->GetComponentPtr<KE::R::StaticMeshComponent>();
-
-    
-    testComp->mesh->submeshes_.resize(1);
-
-    KE::R::Submesh &testSubmesh = testComp->mesh->submeshes_[0];
-
-    testSubmesh.vertexAttributes_ = VK::Buffer(0, sizeof(vertexAttribs), vk::BufferUsageFlagBits::eVertexBuffer,
-                            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    f32* mappedAttribBuffer = (float*)testSubmesh.vertexAttributes_.map();
-    memcpy(mappedAttribBuffer, vertexAttribs, sizeof(vertexAttribs));
-    testSubmesh.vertexAttributes_.unmap();
     
 
-    testSubmesh.binding_.stride = 20;
-    testSubmesh.binding_.binding = 1;
+    std::shared_ptr<Entity> testEnt2 = entityWorld.AddEntity("TestDecorationEntity");
 
-    vk::VertexInputAttributeDescription2EXT attribDesc;
-    attribDesc.binding = 0;
-    attribDesc.location = 0;
-    attribDesc.format = vk::Format::eR32G32B32Sfloat;
-    testSubmesh.attributeDescs_.push_back(attribDesc);
+    std::shared_ptr<KE::R::StaticMeshComponent> testComp2 = testEnt2->GetComponentPtr<KE::R::StaticMeshComponent>();
 
-    attribDesc.binding = 1;
-    attribDesc.location = 1;
-    attribDesc.offset = 0;
-    attribDesc.format = vk::Format::eR32G32B32Sfloat;
-    testSubmesh.attributeDescs_.push_back(attribDesc);
+    testComp2->meshPath = "C:/Users/raket/source/repos/CobaltFPSTest/Engine/assets/error.gltf";
 
-    attribDesc.offset = 12;
-    attribDesc.location = 2;
-    attribDesc.format = vk::Format::eR32G32Sfloat;
-
-    testSubmesh.attributeDescs_.push_back(attribDesc);
-
-    renderer.RegisterComponent(testEnt, testComp);
-
+    renderer.RegisterComponent(testEnt2, testComp2);
 
     while (isRunning)
     {
@@ -176,6 +92,8 @@ void Client::Main()
                 isRunning = false;
             }
         }
+
+        testEnt2.get()->transform_.position_ = glm::vec3(0, 0, sin(float(GlobalClock::QueryGlobalTime())));
 
         renderer.Draw();
     }

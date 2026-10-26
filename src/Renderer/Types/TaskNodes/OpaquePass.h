@@ -11,17 +11,10 @@ namespace KE::VK
     class RENDERER_DLL_API  OpaquePass : public VK::ITaskNode
     {
     public:
-        OpaquePass()
-        {
-            Reads("HDRFramebuffer");
-            Writes("HDRFramebuffer");
-        }
-        ~OpaquePass();
+      OpaquePass();
+      ~OpaquePass() = default;
 
-        virtual void Execute(vk::CommandBuffer cmd) override
-        {
-
-        }
+      virtual void Execute(vk::CommandBuffer cmd) override;
     };
     
 }
