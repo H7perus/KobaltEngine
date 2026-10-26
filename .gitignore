@@ -388,3 +388,6 @@ FodyWeavers.xsd
 */**/CMakeFiles
 
 *.cmake
+
+*.blend1
+.vscode/
