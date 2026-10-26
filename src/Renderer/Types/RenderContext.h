@@ -15,7 +15,8 @@ class RenderContext
   public:
     RenderContext();
     VK::Buffer vertexPosBuffer;
-
+    // will be interesting with compaction in the future;
+    u32 currentVertexOffset = 0;
 
     std::map<std::string, std::shared_ptr<Mesh>> meshes_;
 
@@ -34,5 +35,9 @@ class RenderContext
 
 
     static RenderContext& GetInstance();
+
+    std::shared_ptr<Mesh> AddMesh(RenderMesh loadedMesh, std::string meshName);
+
+    u32 AddVerticesToPosBuffer(std::vector<glm::vec3> vertices);
 };
 } // namespace KE::R

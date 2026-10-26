@@ -6,8 +6,8 @@ set_target_properties(Engine PROPERTIES FOLDER Engine)
 
 target_compile_definitions(Engine PRIVATE ENGINE_DLL_EXPORTS)
 
-
-
+find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+target_include_directories(Engine PRIVATE ${TINYGLTF_INCLUDE_DIRS})
 
 target_link_libraries(Engine PRIVATE Base)
 

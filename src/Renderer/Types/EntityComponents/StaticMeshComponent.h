@@ -14,7 +14,8 @@ namespace KE::R
     public: 
         StaticMeshComponent() = default;
 
-        
+        std::string meshPath = "";
+
         std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();
 
 
