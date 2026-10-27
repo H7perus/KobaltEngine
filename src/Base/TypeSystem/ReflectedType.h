@@ -1,6 +1,7 @@
 #pragma once
 #include "BasicTypeAliases.h"
 #include <string>
+#include <meta>
 
 #include "TypeInfo.h"
 #include "TypeRegister.h"
@@ -27,7 +28,8 @@ class IReflectedType
   private:                                                                                                             \
     static KE::TypeInfo const* GetTypeInfo()                                                                           \
     {                                                                                                                  \
-        static KE::TypeInfo const* typeInfo = KE::TypeRegister::RegisterType(#TypeName);                               \
+        static KE::TypeInfo const* typeInfo =                                                                          \
+            KE::TypeRegister::RegisterType(std::define_static_string(std::meta::display_string_of(^^TypeName)));       \
         return typeInfo;                                                                                               \
     }                                                                                                                  \
                                                                                                                        \

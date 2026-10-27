@@ -41,7 +41,8 @@ class ENGINE_DLL_API EntityFactory
     template <std::derived_from<IEntityComponent> T>
     static ComponentKey RegisterComponentType(const char* EntityComponentTypeName)
     {
-        u64 hashedName                 = FNV1aTo64(EntityComponentTypeName);
+        //same name KE_REFLECT registers, so the key matches T::GetStaticTypeID()
+        u64 hashedName                 = FNV1aTo64(std::define_static_string(std::meta::display_string_of(^^T)));
         componentCreators_[hashedName] = [] { return std::make_shared<T>(); };
         return ComponentKey(hashedName);
     }

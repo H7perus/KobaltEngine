@@ -1,6 +1,7 @@
 #include "TypeRegister.h"
 
 #include "Util/FNV1a.h"
+#include <cstring>
 #include <format>
 #include <stdexcept>
 
@@ -21,9 +22,10 @@ KE::TypeInfo* KE::TypeRegister::RegisterType(const char* typeName)
     }
     else
     {
-        throw std::logic_error(
-            std::format("Type already exists or colliding hash! \n Existing name: {}  \n Trying to add: {} ",
-                        types.at(hashedName).typeName, typeName));
+        if (strcmp(typeName, KE::TypeRegister::types.at(hashedName).typeName.c_str()) != 0)
+            throw std::logic_error(
+                std::format("Type already exists or colliding hash! \n Existing name: {}  \n Trying to add: {} ",
+                            types.at(hashedName).typeName, typeName));
     }
 
     return &KE::TypeRegister::types.at(hashedName);
