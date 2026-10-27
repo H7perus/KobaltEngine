@@ -3,6 +3,7 @@
 #include "GpuInterface/Types/TaskNode.h"
 
 #include "GpuInterface/Types/PipelineGraphics.h"
+#include "GpuInterface/Types/Sampler.h"
 
 #include "vulkan/vulkan.hpp"
 
@@ -21,6 +22,7 @@ class RENDERER_DLL_API TonemapAndPresent : public VK::ITaskNode
 
   private:
     VK::PipelineGraphics pipeline;
+    VK::Sampler          sampler;
 };
 
 } // namespace KE::R

@@ -4,6 +4,7 @@
 #include "GpuInterface/Types/SwapchainOutput.h"
 #include "GpuInterface/Types/PipelineGraphics.h"
 #include "GpuInterface/Types/DeviceManager.h"
+#include "GpuInterface/Types/DescriptorHandle.h"
 #include "Renderer/Types/RenderContext.h"
 
 KE::R::TonemapAndPresent::TonemapAndPresent()
@@ -20,6 +21,8 @@ KE::R::TonemapAndPresent::TonemapAndPresent()
 
     auto specialisedShader  = slangGraphicsShader.Specialise();
     pipeline = VK::PipelineGraphics(0, specialisedShader);
+
+    sampler = VK::Sampler(0, true);
 };
 
 void KE::R::TonemapAndPresent::Execute(vk::CommandBuffer cmd)
@@ -78,15 +81,13 @@ void KE::R::TonemapAndPresent::Execute(vk::CommandBuffer cmd)
     
 
 
-    u32 hdrBufferTexIndex = HDRFramebuffer.GetResourceHeapIndex();
-    
-    // vk::HostAddressRangeConstEXT range;
-    // range.address = &hdrBufferTexIndex;
-    // range.size = sizeof(hdrBufferTexIndex);
-    // vk::PushDataInfoEXT pushInfo;
-    // pushInfo.data = range;
+    VK::DescriptorHandle hdrFramebufferHandle(HDRFramebuffer, sampler);
 
-    // cmd.pushDataEXT(pushInfo);
+    vk::PushDataInfoEXT pushInfo;
+    pushInfo.data.address = &hdrFramebufferHandle;
+    pushInfo.data.size    = sizeof(hdrFramebufferHandle);
+
+    cmd.pushDataEXT(pushInfo);
 
     cmd.draw(3, 1, 0, 0);
     cmd.endRendering();
