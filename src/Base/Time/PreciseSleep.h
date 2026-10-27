@@ -35,7 +35,7 @@ namespace KE
 	inline constexpr i64 spinMarginHighResTimer = i64(1e6); //0.5ms is too low to be entirely reliable
 	inline constexpr i64 spinMarginLowResTimer  = i64(3e6);
 #else
-	inline constexpr i64 spinMargin = i64(1e6);
+	inline constexpr i64 spinMargin = i64(3e5);
 #endif
 
 #ifdef _WIN32
