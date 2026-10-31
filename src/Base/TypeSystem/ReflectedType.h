@@ -29,7 +29,7 @@ class IReflectedType
     static KE::TypeInfo const* GetTypeInfo()                                                                           \
     {                                                                                                                  \
         static KE::TypeInfo const* typeInfo =                                                                          \
-            KE::TypeRegister::RegisterType(std::define_static_string(std::meta::display_string_of(^^TypeName)));       \
+            KE::TypeRegister::RegisterType(std::define_static_string(std::meta::identifier_of(^^TypeName)));       \
         return typeInfo;                                                                                               \
     }                                                                                                                  \
                                                                                                                        \

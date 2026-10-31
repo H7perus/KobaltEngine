@@ -46,7 +46,7 @@ void KE::R::UpdateBuffers::Execute(vk::CommandBuffer cmd)
     {
         int transformIndex = target.second->gpuTransformIndex;
 
-        renderContext.transforms[transformIndex] = target.first.get()->GetRelativeTransform(view);
+        renderContext.transforms[transformIndex] = target.first->GetRelativeTransform(view);
     }
 
     //auto specTransform = glm::mat4x3(glm::mat3(1));

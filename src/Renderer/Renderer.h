@@ -3,6 +3,7 @@
 #include "GpuInterface/Types/TaskGraph.h"
 #include "GpuInterface/Types/Texture.h"
 
+#include "Renderer/Types/EntityComponents/StaticMeshComponent.h"
 #include "Engine/Interfaces/IRenderer.h"
 
 #include "SDL3/SDL.h"
@@ -26,9 +27,9 @@ class RENDERER_DLL_API Renderer : public IRenderer
     Renderer& operator=(Renderer&&)      = default;
 
 
-    virtual void RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) override;
+    void RegisterComponent(Entity::Entity& entity, StaticMeshComponent& comp);
 
-    virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) override;
+    //virtual void UnregisterComponent(Entity::Entity& entity, StaticMeshComponent& comp);
 
 
     virtual void Init(SDL_Window*& windowPtr) override;

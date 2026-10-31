@@ -31,7 +31,7 @@ class RenderContext
 
     // does not account well for meshes that have a mix of rendering types (opaque, transparent, alpha test, etc...)
     // TODO: Find a solution for this. For now this is fine
-    std::vector<std::pair<std::shared_ptr<KE::Entity>, std::shared_ptr<KE::R::StaticMeshComponent>>>
+    std::vector<std::pair<KE::Entity::Entity*, KE::R::StaticMeshComponent*>>
         staticOpaqueRenderables;
 
 

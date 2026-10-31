@@ -3,6 +3,6 @@
 
 namespace KE::R
 {
-    KE_REGISTERCOMPONENT(StaticMeshComponent);
+    //KE_REGISTERCOMPONENT(StaticMeshComponent);
 }
 

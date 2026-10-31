@@ -1,0 +1,3 @@
+# GCC-only flags from the mingw compile database that clang doesn't understand
+CompileFlags:
+  Remove: [-freflection, -fmodules-ts, -fmodule-mapper=*, -fdeps-format=*]

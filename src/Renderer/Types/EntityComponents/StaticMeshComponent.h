@@ -6,6 +6,7 @@
 
 #include "RendererDLL.h"
 
+
 namespace KE::R
 {
     class RENDERER_DLL_API StaticMeshComponent : public IEntityComponent
@@ -16,7 +17,7 @@ namespace KE::R
         StaticMeshComponent() = default;
 
         std::string meshPath = "";
-
+        
         u32 gpuTransformIndex = 0;
 
         std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();

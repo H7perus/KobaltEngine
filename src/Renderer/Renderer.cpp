@@ -27,38 +27,33 @@ KE::R::Renderer::Renderer()
 {
 }
 
-void KE::R::Renderer::RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)
+void KE::R::Renderer::RegisterComponent(Entity::Entity& entity, KE::R::StaticMeshComponent& comp)
 {
     auto& renderContext = R::RenderContext::GetInstance();
 
-    if (component->GetTypeID() == R::StaticMeshComponent::GetStaticTypeID())
-    {
-        std::shared_ptr<R::StaticMeshComponent> comp = std::static_pointer_cast<R::StaticMeshComponent>(component);
-
         
-        R::RenderContext::GetInstance().meshes_.try_emplace("test", comp->mesh);
+        R::RenderContext::GetInstance().meshes_.try_emplace("test", comp.mesh);
         // TODO: Add mesh to render context
-        if(renderContext.meshes_.count(comp->meshPath))
+        if(renderContext.meshes_.count(comp.meshPath))
         {
-            comp->mesh = renderContext.meshes_.at(comp->meshPath);
+            comp.mesh = renderContext.meshes_.at(comp.meshPath);
         }
         else 
         {
-            RenderMesh renderMeshLoaded = LoadGLTFAsRenderMesh(comp->meshPath).value();
+            RenderMesh renderMeshLoaded = LoadGLTFAsRenderMesh(comp.meshPath).value();
 
-            comp->mesh = renderContext.AddMesh(renderMeshLoaded, comp->meshPath);
+            comp.mesh = renderContext.AddMesh(renderMeshLoaded, comp.meshPath);
         }
 
-        comp->gpuTransformIndex = renderContext.transforms.size();
+        comp.gpuTransformIndex = renderContext.transforms.size();
         renderContext.transforms.push_back(glm::mat3x4());
 
-        renderContext.staticOpaqueRenderables.push_back(std::pair(entity, comp));
-    }
+        renderContext.staticOpaqueRenderables.push_back(std::pair(&entity, &comp));
 }
 
-void KE::R::Renderer::UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)
-{
-}
+// void KE::R::Renderer::UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)
+// {
+// }
 
 void KE::R::Renderer::Init(SDL_Window*& windowPtr)
 {

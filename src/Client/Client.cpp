@@ -22,6 +22,8 @@
 #include "Renderer/Types/EntityComponents/StaticMeshComponent.h"
 #include "Time/Clocks.h"
 
+#include "Client/Entities/EntityRegistration.h"
+
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
@@ -50,7 +52,7 @@ int Client::Initialise()
     }
     
     renderer.Init(window);
-
+    RegisterClientEntities(entityWorld.entityFactory);
     return 0;
 }
 void Client::Render()
@@ -62,24 +64,11 @@ void Client::Main()
     LoopRateLimiter fps_limiter(100.f);
     bool            isRunning = true;
 
-    //GpuInterface is never Init()'d anymore (Renderer owns the instance), so vk_inst_ is null and this nulls every
-    //instance/device function. On Linux the dispatcher copies of all .so's get merged, so it wiped Renderer's too.
-    //VULKAN_HPP_DEFAULT_DISPATCHER.init();
-    //VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(((VkGpuInterface*)GpuInterface)->vk_inst_));
-
     VK::TaskGraph taskGraph;
 
-    entityWorld.AddWorldSystem<R::Renderer>();
+    auto testEnt2 = entityWorld.AddEntity<Entity::TestDecorationEntity>();
 
-    
-
-    std::shared_ptr<Entity> testEnt2 = entityWorld.AddEntity("TestDecorationEntity");
-
-    std::shared_ptr<KE::R::StaticMeshComponent> testComp2 = testEnt2->GetComponentPtr<KE::R::StaticMeshComponent>();
-
-    testComp2->meshPath = "../../../../../Engine/assets/error.gltf";
-
-    renderer.RegisterComponent(testEnt2, testComp2);
+    renderer.RegisterComponent(testEnt2, testEnt2.mesh);
 
     while (isRunning)
     {
@@ -95,7 +84,7 @@ void Client::Main()
             }
         }
 
-        testEnt2.get()->transform_.position_ = glm::vec3(0, 0, sin(float(GlobalClock::QueryGlobalTime())));
+        testEnt2.transform_.position_ = glm::vec3(0, 0, sin(float(GlobalClock::QueryGlobalTime())));
 
         renderer.Draw();
     }

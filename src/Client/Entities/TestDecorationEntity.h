@@ -1,38 +1,21 @@
 #pragma once
 
 
-//#include "Engine/Entity/TypedEntity.h"
-//#include "Renderer/Types/EntityComponents/StaticMeshComponent.h"
+#include "Engine/Entity/Entity.h"
+#include "Renderer/Types/EntityComponents/StaticMeshComponent.h"
 
-namespace KE
+namespace KE::Entity
 {
-// class TestDecorationEntity : public TypedEntity
-// {
-//     KE_REFLECT(TestDecorationEntity)
-//   public:
-//     TestDecorationEntity(EntityWorld* world) : KE_ENTITY(TestDecorationEntity)
-//     {
-//         world->RegisterEntity(entity);
-//         world->AddComponentToEntity<KE::R::StaticMeshComponent>(entity.get());
+class TestDecorationEntity : public Entity
+{
+    KE_REFLECT(TestDecorationEntity)
+  public:
+    TestDecorationEntity()
+    {
+        mesh.meshPath = "../../../../../Engine/assets/error.gltf";
+    }
 
-//         //world->AddComponentToEntity.......
+    R::StaticMeshComponent mesh;
+};
 
-
-//         //entity->components_.sort()
-
-
-//     }
-// };
-
-// inline const EntityArchetype DecorationArchetype = {
-//     .name = "DecorationEntity",
-//     .typeId = KE_TYPE_ID(DecorationEntity),
-//     .components = { ComponentType<StaticMeshComponent>, ... }
-// };
-
-
-
-} // namespace KE
-
-
-
+} // namespace KE::Entity

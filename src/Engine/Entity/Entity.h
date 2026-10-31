@@ -1,72 +1,66 @@
 #pragma once
 #include "BasicTypeAliases.h"
 #include "Engine/General/Transform.h"
-#include "Engine/Entity/EntityComponent.h"
 #include "Engine/General/View.h"
-
+#include "TypeSystem/ReflectedType.h"
 
 
 #include <memory>
+#include <string>
+
 
 //------------------------------------------------------------
-// Entity type. Needs to register itself by name into the factory!
+// Entity base class
 //------------------------------------------------------------
-namespace KE
+
+
+namespace KE { class EntityFactory; class EntityWorld; }
+namespace KE::Entity
 {
-	class Entity
-	{
-		friend class EntityWorld;
-		friend class EntityFactory;
-		// 0 = entity not loading yet, 1 = entity loading, 2 = entity loaded, 3 = entity destroyed
-		u8 state_ = 0;
 
-		//type info
-		u64 typeID_;
-		std::string entityTypeName_;
+struct EntityHandle
+{
+    u64 id = 0;   // 0 = invalid
 
-		//unique entity ID
-		u32 entityID_ = 0;
+    constexpr bool IsValid() const { return id != 0; }
+    constexpr bool operator==(const EntityHandle&) const = default;
+};
 
-		
+enum class EntityState : u8
+{
+    Unloaded,
+    Loading,
+    Loaded,
+    Destroyed
+};
 
-		std::vector<std::shared_ptr<IEntityComponent>> components_;
+enum class EntityFlags : u8
+{
+};
 
-	public:
-		//HACK: This should be hidden to anything but Entity Systems and Entity World Systems, but alas, for testing
-		Transform transform_;
+class Entity : IReflectedType
+{
+    friend class KE::EntityWorld;
+    friend class KE::EntityFactory;
+    EntityState state_ = EntityState::Unloaded;
+    EntityFlags flags_{};
+    // entity class id
+    u64 classID_ = 0;
+    // unique entity id
+    u64 entityID_ = 0;
 
-		Entity(std::string entityTypeName, u64 typeID) : entityTypeName_(entityTypeName), typeID_(typeID) {};
+  public:
+    // HACK: This should be hidden to anything but Entity Systems and Entity World Systems, but alas, for testing
+    Transform transform_;
 
-		template<std::derived_from<IEntityComponent> T>
-		std::shared_ptr<T> GetComponentPtr()
-		{
-			for(std::shared_ptr<IEntityComponent> &component : components_)
-			{
-				if(T::GetStaticTypeID() == component->GetTypeID())
-				{
-					return std::static_pointer_cast<T>(component);
-				}
-			}
-			//TODO: This should straight up except. No tolerance for silent failure
-			return nullptr;
-		}
+    glm::mat3x4 GetRelativeTransform(KE::View view)
+    {
+        return transform_.GetRelativeTransform(view.origin);
+    }
 
-		glm::mat3x4 GetRelativeTransform(KE::View view)
-		{
-			return transform_.GetRelativeTransform(view.origin);
-		}
-
-		bool IsValid() { return state_ == 2;};
-	};
-
-	struct EntityKey
-	{
-		u64                                                entityTypeID;
-
-		EntityKey(u64 entityTypeID) : entityTypeID(entityTypeID)
-		{
-		}
-	};
-
-}
-	
+    const bool IsValid()
+    {
+        return state_ == EntityState::Loaded;
+    };
+};
+} // namespace KE::Entity

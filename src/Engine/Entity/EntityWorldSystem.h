@@ -23,7 +23,7 @@ class EntityWorldSystem : public IReflectedType
         return *this;
     }
 
-    virtual void RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)   = 0;
-    virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) = 0;
+    //virtual void RegisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component)   = 0;
+    //virtual void UnregisterComponent(std::shared_ptr<Entity> entity, std::shared_ptr<IEntityComponent> component) = 0;
 };
 } // namespace KE

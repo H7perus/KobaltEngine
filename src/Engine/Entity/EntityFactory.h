@@ -2,13 +2,14 @@
 
 #include "Engine/Entity/Entity.h"
 #include "Engine/Entity/EntityComponent.h"
-#include "Engine/Entity/TypedEntity.h"
+#include <concepts>
 #include <functional>
 #include <stdexcept>
 #include <string>
-
+#include <cstring>
 
 #include "EngineDLL.h"
+#include "TypeSystem/ReflectedType.h"
 #include "Util/FNV1a.h"
 
 #include <memory>
@@ -17,43 +18,59 @@ namespace KE
 {
 using ComponentCreator = std::function<std::shared_ptr<IEntityComponent>()>;
 
+
+struct EntityTypeDescriptor
+{
+    u64                       classID; // FNV1aTo64(identifier_of(^^T)), persisted / networked
+    const char*               className;
+    std::unique_ptr<Entity::Entity> (*create)();
+};
+
 class ENGINE_DLL_API EntityFactory
 {
   public:
-    static EntityKey RegisterEntityArchetype(const char* EntityTypeName, std::vector<ComponentKey> components)
+    template<std::derived_from<KE::Entity::Entity> T>
+    void Register()
     {
-        u64 hashedName = FNV1aTo64(EntityTypeName);
+        constexpr auto hash = FNV1aTo64(std::meta::identifier_of(^^T));
 
-        EntityArchetype archetype{hashedName, EntityTypeName, components};
+        EntityTypeDescriptor descriptor
+        {
+            .classID = hash,
+            .className = std::define_static_string(std::meta::identifier_of(^^T)),
+            .create = []() -> std::unique_ptr<KE::Entity::Entity> 
+            { 
+                std::unique_ptr<Entity::Entity> ent = std::make_unique<T>();
+                ent->classID_ = hash;
 
-        if (entityArchetypes_.find(hashedName) == entityArchetypes_.end())
-        {
-            entityArchetypes_[hashedName] = archetype;
-        }
-        else
-        {
-            throw std::logic_error("Entity name already exists!");
+                return ent;
+            }
         };
 
-        return EntityKey(hashedName);
+        auto [it, inserted] = entityDescriptors.emplace(hash, descriptor);
+        if (!inserted && std::strcmp(it->second.className, descriptor.className) != 0)
+            throw std::invalid_argument("Entity Name already exists!!!");
     }
 
-    template <std::derived_from<IEntityComponent> T>
-    static ComponentKey RegisterComponentType(const char* EntityComponentTypeName)
+    template<std::derived_from<KE::Entity::Entity> T>
+    std::unique_ptr<Entity::Entity> Create()
     {
-        //same name KE_REFLECT registers, so the key matches T::GetStaticTypeID()
-        u64 hashedName                 = FNV1aTo64(std::define_static_string(std::meta::display_string_of(^^T)));
-        componentCreators_[hashedName] = [] { return std::make_shared<T>(); };
-        return ComponentKey(hashedName);
+        constexpr auto hash = FNV1aTo64(std::meta::identifier_of(^^T));
+
+        return Create(hash);
     }
 
-    static std::shared_ptr<Entity> Create(const char* EntityTypeName);
-
-    static std::shared_ptr<Entity> Create(u64& hashedName);
+    std::unique_ptr<Entity::Entity> Create(u64 hash)
+    {
+        if (!entityDescriptors.contains(hash))
+        {
+            throw std::logic_error("Entity does not exist!");
+        }
+        return entityDescriptors.at(hash).create();
+    }
 
   private:
-    static std::unordered_map<u64, EntityArchetype>  entityArchetypes_;
-    static std::unordered_map<u64, ComponentCreator> componentCreators_;
+    std::unordered_map<u64, EntityTypeDescriptor, IdentityHash>  entityDescriptors;
 };
 } // namespace KE
 
